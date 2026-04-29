@@ -1,7 +1,7 @@
 {
-  "tool_name": "Read",
-  "tool_input_preview": "{\"file_path\":\"C:\\\\Users\\\\wjddn\\\\IdeaProjects\\\\fitcoach_client\\\\Docs\\\\고객 시나리오.pdf\",\"pages\":\"1-10\"}",
-  "error": "pdftoppm failed: Command 'pdftoppm' not found or is in an unsafe location (current directory)",
-  "timestamp": "2026-04-29T15:30:48.451Z",
-  "retry_count": 4
+  "tool_name": "PowerShell",
+  "tool_input_preview": "{\"command\":\"$out = \\\"C:\\\\Users\\\\wjddn\\\\IdeaProjects\\\\fitcoach_client\\\\target\\\\classes\\\"\\n\\\"0\\\" | & \\\"C:\\\\Program Files\\\\Java\\\\jdk-17\\\\bin\\\\java.exe\\\" -cp $out distbuted_programming.Main 2>&1\",\"timeout...",
+  "error": "Exit code 1\n========================================\r\n     �ｺ�� ���� �ý��� ? ������ SW\r\n========================================\r\n\n[���� �޴�]\r\n 1. UC01 ȸ������        2. UC02 �����ϱ�\r\n 3. UC03 ȸ���� ����     4. UC04 �ｺ ���α׷� ����\r\n 5. UC05 ���ǰ ����   6. UC06 PT ����\r\n 7. UC07 ����(�ȳ�)      8. UC08 �⼮ üũ\r\n 9. UC09 ����       10. UC10 ����Ʈ ����(�ȳ�)\r\n11. UC11 �ⱸ �˻�      12. UC12 ���� ��ȸ\r\n13. UC13 ��������       14. UC14 ������ ����\r\n15. UC15 ������ ����    16. UC16 ȸ���� ����\r\n17. UC17 �ܿ...",
+  "timestamp": "2026-04-29T16:02:10.646Z",
+  "retry_count": 1
 }
