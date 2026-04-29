@@ -1,0 +1,7 @@
+{
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"C:\\\\Users\\\\wjddn\\\\IdeaProjects\\\\fitcoach_client\\\\Docs\\\\고객 시나리오.pdf\",\"pages\":\"1-10\"}",
+  "error": "pdftoppm failed: Command 'pdftoppm' not found or is in an unsafe location (current directory)",
+  "timestamp": "2026-04-29T15:30:48.451Z",
+  "retry_count": 4
+}
