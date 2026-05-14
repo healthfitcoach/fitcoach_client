@@ -1,53 +1,68 @@
-# 헬스장 관리 시스템 — 고객용 SW
+# CLAUDE.md - Master Rules
 
-## 세션 시작 시 반드시 실행할 것
-
-1. **클래스 명세 읽기 (필수)**
-   - `class-spec.md` — 클래스명·속성(타입)·메서드(파라미터/반환타입)·관계의 **정확한 텍스트 명세**. 이것을 코딩 기준으로 삼는다.
-   - `Docs/class-diagram-customer-1.png` / `Docs/class-diagram-customer-2.png`  — 다이어그램 이미지을 읽고 클래스 다이어그램에 명세된 그대로 관계를 설정하고 클래스를 작성한다.
-
-2. **시나리오 읽기**
-   - `docs/고객용 시나리오.pdf` (또는 `Docs/고객용 시나리오.pdf`)
-   - UC별 Basic Path, Alternative Path, Exception 흐름을 전부 파악한 후 코딩한다.
-
-3. **코딩 컨벤션 읽기**
-   - `gym-java-conventions.md` 파일을 읽고 모든 규칙을 준수한다.
-   - Google Java Style Guide 기준 (들여쓰기 2칸, UpperCamelCase 클래스, lowerCamelCase 메서드/변수 등).
-
-4. **기타사항**
-   - aggregation hierarchy 구조로 작성하며 메인클래스에 모든 시나리오를 작성하는 것이 아닌 컨트롤러와 같은 것을 통해 메인은 진입점 역할만 하고 실제 역할 분배와 작업은 하위 클래스로 한다.
-   - 도메인에 따라 클래스를 구분해서 패키지를 나눈다.
----
-
-## 절대 규칙
-
-- 순수 Java만 — Spring / Maven / Gradle / 프레임워크 금지
-- 웹 프로그램 금지 — HTTP, 서블릿, REST API 없음
-- 텍스트 기반 — Scanner 입력, System.out.println() 출력만 사용
-- Main은 `src/Main.java` 하나만 — UC 순서대로 순차 실행
-- UC 하나 구현 → 수동 테스트 → 다음 UC 순서로 진행
+이 파일은 Claude Code가 코드를 작성할 때 항상 참조하는 마스터 규칙이다.
+모든 규칙은 예외 없이 전체 코드베이스에 적용된다.
 
 ---
 
-## UC 구현 순서 (20개)
+## 1. 기술 원칙
 
-1. UC01 회원가입을 한다
-2. UC02 구매한다
-3. UC03 회원권을 구매한다
-4. UC04 헬스 프로그램을 구매한다
-5. UC05 운동용품을 구매한다
-6. UC06 PT를 구매한다
-7. UC07 결제한다
-8. UC08 헬스장에 출석한다
-9. UC09 운동기록을 기록한다
-10. UC10 포인트를 지급받는다
-11. UC11 기구를 검색한다
-12. UC12 운동방법을 조회한다
-13. UC13 공지사항을 확인한다
-14. UC14 내정보를 관리한다
-15. UC15 내정보를 수정한다
-16. UC16 회원권을 관리한다
-17. UC17 잔여기간을 조회한다
-18. UC18 부가적인 상품을 관리한다
-19. UC19 포인트를 조회한다
-20. UC20 PT 일정을 잡는다
+언어: Pure Java SE 17+
+외부 라이브러리, Spring, GUI, DB, Web 사용 금지
+인터페이스: Text-Based Console (Scanner 입력, System.out.println 출력)
+데이터 관리: DB 없이 List, Map 등 Java Collection을 활용한 In-Memory 방식
+
+---
+
+## 2. 적시 초기화 원칙 (Just-In-Time Init)
+
+규칙 1: 생성자에서는 필드 할당만 수행한다. 로직을 절대 포함하지 않는다.
+규칙 2: 실제 로직(데이터 로드, 객체 연결, 외부 연동 시뮬레이션)은 반드시 public boolean init() 메서드에서 처리한다.
+규칙 3: init()은 해당 객체의 기능이 실행되기 직전에 호출한다.
+규칙 4: init() 호출 후 반드시 성공 여부를 검증한다. 실패 시 오류 메시지를 출력하고 즉시 흐름을 종료한다.
+
+적용 패턴:
+    SomeService service = new SomeService();
+    if (!service.init()) {
+        System.out.println("서비스 초기화에 실패했습니다. 잠시 후 다시 시도해주세요.");
+        return;
+    }
+    service.doSomething();
+
+---
+
+## 3. 콘솔 출력 형식
+
+모든 유스케이스의 각 단계는 아래 형식으로 출력한다.
+
+    Step 1: 회원가입 입력 폼을 출력합니다.
+    Step 2: 아이디 중복 여부를 확인합니다.
+
+사용자 입력 요청 시 프롬프트:
+    >
+
+오류 및 안내 메시지는 유스케이스 시나리오(docs/usecases/) 원문 텍스트를 그대로 출력한다.
+
+---
+
+## 4. 파일 참조 가이드
+
+클래스 뼈대 및 구조 설계 시: docs/system_design.md 참조
+초기 데이터 세팅 시: docs/initial_data.md 참조
+유스케이스 시나리오 구현 시: docs/usecases/UC01_SignUp.md ~ UC20_SchedulePT.md 참조
+
+---
+
+## 5. 메인 루프 구조
+
+비로그인 상태 노출 메뉴: 회원가입, 로그인, 기구검색 (Equipment는 Member와 독립)
+로그인 상태 노출 메뉴: 전체 20개 유스케이스
+종료 조건: 0 또는 exit 입력 시 프로그램 종료
+
+---
+
+## 6. 예외 처리 원칙
+
+Alternative Path와 Exception은 docs/usecases/ 원문 메시지와 동일하게 출력한다.
+숫자 입력 오류(NumberFormatException)는 try-catch로 처리하고 재입력을 유도한다.
+시스템 오류 시뮬레이션은 Random 또는 플래그 변수를 활용한다.
