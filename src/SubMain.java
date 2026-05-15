@@ -1520,7 +1520,104 @@ public class SubMain {
         System.out.println("─────────────────────────────────");
     }
 
-    private void handleViewNotice() {}      // UC13
+    private void handleViewNotice() {
+        // Step 2: 공지사항 목록 최신순 출력 (E1)
+        System.out.println("Step 2: 공지사항 목록을 최신순으로 출력합니다.");
+        if (notices.isEmpty()) {
+            System.out.println("공지사항을 불러오는 데 실패하였습니다. 잠시 후 다시 시도해주세요.");
+            return;
+        }
+
+        List<Notice> sorted = new ArrayList<>(notices);
+        sorted.sort((a, b) -> b.getWriteDate().compareTo(a.getWriteDate()));
+
+        while (true) {
+            System.out.println("─────────────────────────────────");
+            for (int i = 0; i < sorted.size(); i++) {
+                Notice n = sorted.get(i);
+                String mark = n.isReadBy(currentMember.getMemberId()) ? "[읽음]  " : "[미읽음]";
+                System.out.printf("%d. %s [%s] %s (%s)%n",
+                        i + 1, mark, n.getCategory(), n.getTitle(), n.getWriteDate());
+            }
+            System.out.println("0. 돌아가기");
+            System.out.print("> ");
+
+            String input = scanner.nextLine().trim();
+            if (input.equals("0")) return;
+
+            try {
+                int idx = Integer.parseInt(input) - 1;
+                if (idx < 0 || idx >= sorted.size()) {
+                    System.out.println("올바른 번호를 입력해주세요.");
+                    continue;
+                }
+
+                // Step 5~6: 상세 내용 출력 및 읽음 처리 (E2)
+                System.out.println("Step 5: 선택한 공지사항의 상세 내용을 출력합니다.");
+                Notice selected = sorted.get(idx);
+                if (!selected.init()) {
+                    System.out.println("해당 공지사항을 불러오는 데 실패하였습니다. 잠시 후 다시 시도해주세요.");
+                    return;
+                }
+                printNoticeDetail(selected);
+                selected.markAsRead(currentMember.getMemberId());
+                System.out.println("Step 6: 읽음 처리가 완료되었습니다.");
+
+                // Step 7~9: 이전/다음 탐색 및 첨부파일 (A1, A2)
+                while (true) {
+                    System.out.println("P. 이전 공지   N. 다음 공지   D. 첨부파일 다운로드   0. 목록으로");
+                    System.out.print("> ");
+                    String nav = scanner.nextLine().trim();
+
+                    if (nav.equals("0")) break;
+
+                    if (nav.equalsIgnoreCase("P")) {
+                        if (idx == 0) {
+                            System.out.println("이전 공지사항이 없습니다.");
+                        } else {
+                            idx--;
+                            selected = sorted.get(idx);
+                            printNoticeDetail(selected);
+                            selected.markAsRead(currentMember.getMemberId());
+                        }
+                    } else if (nav.equalsIgnoreCase("N")) {
+                        if (idx == sorted.size() - 1) {
+                            System.out.println("다음 공지사항이 없습니다.");
+                        } else {
+                            idx++;
+                            selected = sorted.get(idx);
+                            printNoticeDetail(selected);
+                            selected.markAsRead(currentMember.getMemberId());
+                        }
+                    } else if (nav.equalsIgnoreCase("D")) {
+                        // A1: 첨부파일 다운로드
+                        if ("없음".equals(selected.getAttachment()) || selected.getAttachment().isEmpty()) {
+                            System.out.println("첨부파일이 없습니다.");
+                        } else {
+                            System.out.println("첨부파일 '" + selected.getAttachment() + "' 다운로드가 완료되었습니다.");
+                        }
+                    }
+                }
+
+                // Step 10: 목록으로 돌아가기
+                System.out.println("Step 10: 공지사항 목록으로 돌아갑니다.");
+
+            } catch (NumberFormatException e) {
+                System.out.println("올바른 번호를 입력해주세요.");
+            }
+        }
+    }
+
+    private void printNoticeDetail(Notice n) {
+        System.out.println("─────────────────────────────────");
+        System.out.println("제목     : " + n.getTitle());
+        System.out.println("카테고리 : " + n.getCategory());
+        System.out.println("작성일   : " + n.getWriteDate());
+        System.out.println("첨부파일 : " + n.getAttachment());
+        System.out.println("[내용]");
+        System.out.println(n.getContent());
+        System.out.println("─────────────────────────────────");
+    }
 
     private void handleManageMyInfo() {}    // UC14
 
