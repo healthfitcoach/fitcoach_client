@@ -1,4 +1,5 @@
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -60,6 +61,7 @@ public class SubMain {
     public boolean init() {
         try {
             scanner = new Scanner(System.in);
+            initMembers();
             initMembershipCatalog();
             initProgramCatalog();
             initSportEquipmentCatalog();
@@ -78,6 +80,11 @@ public class SubMain {
     // -------------------------
     // 초기 데이터 세팅 (initial_data.md 기준)
     // -------------------------
+
+    private void initMembers() {
+        members.add(new Member("member-001", "123", "123", "테스터", "테스터",
+                "010-0000-0000", "19900101", "170cm/65kg", "서울시", "", LocalDate.now()));
+    }
 
     private void initMembershipCatalog() {
         membershipCatalog.add(new Membership(
@@ -236,37 +243,34 @@ public class SubMain {
 
     private void showMemberMenu() {
         System.out.println("\n[User System] (로그인: " + currentMember.getNickname() + ")");
-        System.out.println(" 1. 회원가입          2. 구매하기");
-        System.out.println(" 3. 기구 검색         4. 헬스장 출석");
-        System.out.println(" 5. 운동 기록         6. 포인트 지급");
-        System.out.println(" 7. 기구 검색         8. 운동 방법 조회");
-        System.out.println(" 9. 공지사항         10. 내 정보");
-        System.out.println("11. 내 정보 수정     12. 회원권 관리");
-        System.out.println("13. 잔여기간 조회    14. 부가상품 관리");
-        System.out.println("15. 포인트 내역      16. PT 일정 예약");
-        System.out.println("17. 로그아웃");
+        System.out.println(" 1. 구매하기          2. 기구 검색");
+        System.out.println(" 3. 헬스장 출석       4. 운동 기록");
+        System.out.println(" 5. 포인트 지급       6. 운동 방법 조회");
+        System.out.println(" 7. 공지사항          8. 내 정보");
+        System.out.println(" 9. 내 정보 수정     10. 회원권 관리");
+        System.out.println("11. 잔여기간 조회    12. 부가상품 관리");
+        System.out.println("13. 포인트 내역      14. PT 일정 예약");
+        System.out.println("15. 로그아웃");
         System.out.println(" 0. 종료");
         System.out.print("> ");
 
         String input = scanner.nextLine().trim();
         switch (input) {
-            case "1"         -> handleSignUp();
-            case "2"         -> handlePurchase();
-            case "3"         -> handleSearchEquipment();
-            case "4"         -> handleCheckAttendance();
-            case "5"         -> handleRecordExercise();
-            case "6"         -> handleEarnPoints();
-            case "7"         -> handleSearchEquipment();
-            case "8"         -> handleViewExerciseMethod();
-            case "9"         -> handleViewNotice();
-            case "10"        -> handleManageMyInfo();
-            case "11"        -> handleUpdateMyInfo();
-            case "12"        -> handleManageMembership();
-            case "13"        -> handleCheckRemainingPeriod();
-            case "14"        -> handleManageAdditionalProduct();
-            case "15"        -> handleViewPointHistory();
-            case "16"        -> handleSchedulePT();
-            case "17"        -> handleLogout();
+            case "1"         -> handlePurchase();
+            case "2"         -> handleSearchEquipment();
+            case "3"         -> handleCheckAttendance();
+            case "4"         -> handleRecordExercise();
+            case "5"         -> handleEarnPoints();
+            case "6"         -> handleViewExerciseMethod();
+            case "7"         -> handleViewNotice();
+            case "8"         -> handleManageMyInfo();
+            case "9"         -> handleUpdateMyInfo();
+            case "10"        -> handleManageMembership();
+            case "11"        -> handleCheckRemainingPeriod();
+            case "12"        -> handleManageAdditionalProduct();
+            case "13"        -> handleViewPointHistory();
+            case "14"        -> handleSchedulePT();
+            case "15"        -> handleLogout();
             case "0", "exit" -> exitProgram();
             default          -> System.out.println("올바른 메뉴를 선택해주세요.");
         }
@@ -360,24 +364,595 @@ public class SubMain {
         System.out.println("회원가입이 완료되었습니다.");
     }
 
-    private void handleLogin() {}           // (로그인)
+    private void handleLogin() {
+        System.out.println("Step 1: 로그인 정보를 입력합니다.");
+        System.out.print("아이디: ");
+        String loginId = scanner.nextLine().trim();
+        System.out.print("비밀번호: ");
+        String password = scanner.nextLine().trim();
+
+        System.out.println("Step 2: 아이디와 비밀번호를 확인합니다.");
+        Member found = null;
+        for (Member m : members) {
+            if (m.getLoginId().equals(loginId) && m.getPassword().equals(password)) {
+                found = m;
+                break;
+            }
+        }
+
+        if (found == null) {
+            System.out.println("아이디 또는 비밀번호가 올바르지 않습니다.");
+            return;
+        }
+
+        if (!found.init()) {
+            System.out.println("로그인 처리 중 오류가 발생하였습니다. 잠시 후 다시 시도해주세요.");
+            return;
+        }
+
+        currentMember = found;
+        System.out.println(found.getNickname() + "님, 환영합니다.");
+    }
 
     private void handleLogout() {           // (로그아웃)
         currentMember = null;
         System.out.println("로그아웃 되었습니다.");
     }
 
-    private void handlePurchase() {}        // UC02
+    private void handlePurchase() {
+        // E1: 비로그인 상태 확인
+        if (currentMember == null) {
+            System.out.println("로그인이 필요한 서비스입니다.");
+            return;
+        }
 
-    private void handlePurchaseMembership() {}  // UC03
+        System.out.println("Step 1: 구매 가능한 카테고리 목록을 출력합니다.");
 
-    private void handlePurchaseProgram() {}     // UC04
+        while (true) {
+            System.out.println("\n[구매 카테고리]");
+            System.out.println("1. 회원권");
+            System.out.println("2. 헬스 프로그램");
+            System.out.println("3. 운동용품");
+            System.out.println("4. PT");
+            System.out.println("5. 이벤트 중인 상품");
+            System.out.println("0. 돌아가기");
+            System.out.print("> ");
 
-    private void handlePurchaseEquipment() {}   // UC05
+            String input = scanner.nextLine().trim();
+
+            switch (input) {
+                case "1" -> {
+                    if (membershipCatalog.isEmpty()) {
+                        System.out.println("현재 해당 카테고리에 판매 중인 상품이 없습니다.");
+                    } else {
+                        System.out.println("Step 2: 선택한 카테고리의 구매 유스케이스로 이동합니다.");
+                        handlePurchaseMembership();
+                        return;
+                    }
+                }
+                case "2" -> {
+                    if (programCatalog.isEmpty()) {
+                        System.out.println("현재 해당 카테고리에 판매 중인 상품이 없습니다.");
+                    } else {
+                        System.out.println("Step 2: 선택한 카테고리의 구매 유스케이스로 이동합니다.");
+                        handlePurchaseProgram();
+                        return;
+                    }
+                }
+                case "3" -> {
+                    if (sportEquipmentCatalog.isEmpty()) {
+                        System.out.println("현재 해당 카테고리에 판매 중인 상품이 없습니다.");
+                    } else {
+                        System.out.println("Step 2: 선택한 카테고리의 구매 유스케이스로 이동합니다.");
+                        handlePurchaseEquipment();
+                        return;
+                    }
+                }
+                case "4" -> {
+                    if (ptCatalog.isEmpty()) {
+                        System.out.println("현재 해당 카테고리에 판매 중인 상품이 없습니다.");
+                    } else {
+                        System.out.println("Step 2: 선택한 카테고리의 구매 유스케이스로 이동합니다.");
+                        handlePurchasePT();
+                        return;
+                    }
+                }
+                case "5" -> System.out.println("현재 해당 카테고리에 판매 중인 상품이 없습니다.");
+                case "0" -> { return; }
+                default  -> System.out.println("올바른 메뉴를 선택해주세요.");
+            }
+        }
+    }
+
+    private void handlePurchaseMembership() {
+        // Step 1: 회원권 목록 출력
+        System.out.println("Step 1: 이용 가능한 회원권 목록을 출력합니다.");
+        for (int i = 0; i < membershipCatalog.size(); i++) {
+            Membership m = membershipCatalog.get(i);
+            System.out.printf("%d. %-8s %,6d원  |  %s%n",
+                    i + 1, m.getProductName(), m.getPrice(), m.getDescription());
+        }
+        System.out.println("0. 돌아가기");
+
+        Membership selected = null;
+        while (selected == null) {
+            System.out.print("> ");
+            String input = scanner.nextLine().trim();
+            if (input.equals("0")) return;
+            try {
+                int idx = Integer.parseInt(input) - 1;
+                if (idx >= 0 && idx < membershipCatalog.size()) {
+                    selected = membershipCatalog.get(idx);
+                } else {
+                    System.out.println("올바른 번호를 입력해주세요.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("올바른 번호를 입력해주세요.");
+            }
+        }
+
+        // E2: 판매 종료 확인
+        if (!"ACTIVE".equals(selected.getStatus())) {
+            System.out.println("해당 회원권은 현재 판매되지 않습니다.");
+            return;
+        }
+
+        // Step 2: 상세 정보 출력
+        System.out.println("Step 2: 선택한 회원권의 상세 정보를 출력합니다.");
+        System.out.println("─────────────────────────────────");
+        System.out.println("상품명    : " + selected.getProductName());
+        System.out.printf("가격      : %,d원%n", selected.getPrice());
+        System.out.println("설명      : " + selected.getDescription());
+        System.out.println("이용 시설 : 헬스장 전체 시설");
+        System.out.println("─────────────────────────────────");
+        System.out.println("구매하시겠습니까? (Y/N)");
+        System.out.print("> ");
+        if (!scanner.nextLine().trim().equalsIgnoreCase("Y")) return;
+
+        // Step 3: 활성 회원권 보유 여부 확인 (A1)
+        System.out.println("Step 3: 현재 활성화된 회원권 보유 여부를 확인합니다.");
+        Membership active = null;
+        for (Membership ms : memberMemberships) {
+            if (ms.getMemberId().equals(currentMember.getMemberId()) && "ACTIVE".equals(ms.getStatus())) {
+                active = ms;
+                break;
+            }
+        }
+
+        boolean isExtension = false;
+        if (active != null) {
+            System.out.println("[현재 보유 회원권]");
+            System.out.println("종류   : " + active.getProductName());
+            System.out.println("만료일 : " + active.getEndDate());
+            System.out.println("기존 회원권 만료 후 적용됩니다.");
+            System.out.println("연장 구매하시겠습니까? (Y/N)");
+            System.out.print("> ");
+            if (!scanner.nextLine().trim().equalsIgnoreCase("Y")) return;
+            isExtension = true;
+        }
+
+        // Step 4: 시작일 선택 (A2)
+        System.out.println("Step 4: 회원권 시작일을 선택합니다.");
+        System.out.println("1. 즉시 시작 (오늘: " + LocalDate.now() + ")");
+        System.out.println("2. 날짜 직접 입력 (yyyy-MM-dd)");
+        System.out.print("> ");
+
+        LocalDate startDate;
+        if (scanner.nextLine().trim().equals("2")) {
+            LocalDate parsed = null;
+            while (parsed == null) {
+                System.out.print("시작일 (yyyy-MM-dd): ");
+                try {
+                    parsed = LocalDate.parse(scanner.nextLine().trim());
+                } catch (Exception e) {
+                    System.out.println("올바른 날짜 형식을 입력해주세요. (예: 2025-06-01)");
+                }
+            }
+            startDate = parsed;
+        } else {
+            startDate = isExtension ? active.getEndDate().plusDays(1) : LocalDate.now();
+        }
+
+        int duration = getMembershipDurationDays(selected.getProductName());
+        LocalDate endDate = startDate.plusDays(duration - 1);
+
+        // Step 5: 주문 확인 화면
+        System.out.println("Step 5: 주문 확인 화면을 출력합니다.");
+        System.out.println("─────────────────────────────────");
+        System.out.println("[주문 확인]");
+        System.out.println("상품명    : " + selected.getProductName());
+        System.out.println("시작일    : " + startDate);
+        System.out.println("만료일    : " + endDate);
+        System.out.printf("결제 금액  : %,d원%n", selected.getPrice());
+        System.out.println("─────────────────────────────────");
+        System.out.println("결제를 진행하시겠습니까? (Y/N)");
+        System.out.print("> ");
+        if (!scanner.nextLine().trim().equalsIgnoreCase("Y")) return;
+
+        // Step 6: 결제 (UC07)
+        System.out.println("Step 6: 결제 유스케이스(UC07)를 실행합니다.");
+        boolean paid = handlePay(selected.getPrice(), selected.getProductId(), "MEMBERSHIP");
+        if (!paid) return;
+
+        // Step 7: 회원권 등록 (E1)
+        System.out.println("Step 7: 회원권을 계정에 등록합니다.");
+        String newMsId = "ms-" + String.format("%03d", memberMemberships.size() + 1);
+        Membership newMs = new Membership(
+                selected.getProductId(), selected.getProductName(),
+                selected.getPrice(), selected.getDescription(),
+                newMsId, currentMember.getMemberId(), "ACTIVE", startDate, endDate);
+        if (!newMs.init()) {
+            System.out.println("회원권 등록에 실패하였습니다. 고객센터에 문의해주세요.");
+            return;
+        }
+        memberMemberships.add(newMs);
+        System.out.println("회원권 구매가 완료되었습니다.");
+    }
+
+    private int getMembershipDurationDays(String productName) {
+        return switch (productName) {
+            case "1개월권" -> 30;
+            case "3개월권" -> 90;
+            case "6개월권" -> 180;
+            case "1년권"   -> 365;
+            default        -> 30;
+        };
+    }
+
+    private void handlePurchaseProgram() {
+        // Step 1: 헬스 프로그램 목록 출력
+        System.out.println("Step 1: 이용 가능한 헬스 프로그램 목록을 출력합니다.");
+        for (int i = 0; i < programCatalog.size(); i++) {
+            ExerciseProgram p = programCatalog.get(i);
+            Trainer trainer = findTrainer(p.getInstructorId());
+            String trainerName = (trainer != null) ? trainer.getName() : "미정";
+            System.out.printf("%d. %-14s %,6d원 | 담당: %-6s | 잔여: %d/%d명%n",
+                    i + 1, p.getProductName(), p.getPrice(),
+                    trainerName, p.getRemainingCapacity(), p.getCapacity());
+        }
+        System.out.println("0. 돌아가기");
+
+        ExerciseProgram selected = null;
+        while (selected == null) {
+            System.out.print("> ");
+            String input = scanner.nextLine().trim();
+            if (input.equals("0")) return;
+            try {
+                int idx = Integer.parseInt(input) - 1;
+                if (idx >= 0 && idx < programCatalog.size()) {
+                    selected = programCatalog.get(idx);
+                } else {
+                    System.out.println("올바른 번호를 입력해주세요.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("올바른 번호를 입력해주세요.");
+            }
+        }
+
+        // Step 2: 상세 정보 출력
+        Trainer trainer = findTrainer(selected.getInstructorId());
+        String trainerName = (trainer != null) ? trainer.getName() : "미정";
+        System.out.println("Step 2: 선택한 프로그램의 상세 정보를 출력합니다.");
+        System.out.println("─────────────────────────────────");
+        System.out.println("프로그램명 : " + selected.getProductName());
+        System.out.printf("가격       : %,d원%n", selected.getPrice());
+        System.out.println("설명       : " + selected.getDescription());
+        System.out.println("담당 강사  : " + trainerName);
+        System.out.println("정원       : " + selected.getCapacity() + "명");
+        System.out.println("잔여 정원  : " + selected.getRemainingCapacity() + "명");
+        System.out.println("─────────────────────────────────");
+        System.out.println("구매하시겠습니까? (Y/N)");
+        System.out.print("> ");
+        if (!scanner.nextLine().trim().equalsIgnoreCase("Y")) return;
+
+        // Step 3: 잔여 정원 확인 (A1)
+        System.out.println("Step 3: 해당 프로그램의 잔여 정원을 확인합니다.");
+        if (selected.getRemainingCapacity() <= 0) {
+            System.out.println("해당 프로그램은 현재 정원이 마감되었습니다.");
+            System.out.println("대기자 등록은 카운터에 문의해주세요.");
+            return;
+        }
+
+        // Step 4: 시작 희망일 선택
+        System.out.println("Step 4: 프로그램 시작 희망일을 선택합니다.");
+        System.out.println("1. 즉시 시작 (오늘: " + LocalDate.now() + ")");
+        System.out.println("2. 날짜 직접 입력 (yyyy-MM-dd)");
+        System.out.print("> ");
+
+        LocalDate startDate;
+        if (scanner.nextLine().trim().equals("2")) {
+            LocalDate parsed = null;
+            while (parsed == null) {
+                System.out.print("시작 희망일 (yyyy-MM-dd): ");
+                try {
+                    parsed = LocalDate.parse(scanner.nextLine().trim());
+                } catch (Exception e) {
+                    System.out.println("올바른 날짜 형식을 입력해주세요. (예: 2025-06-01)");
+                }
+            }
+            startDate = parsed;
+        } else {
+            startDate = LocalDate.now();
+        }
+
+        // Step 5: 주문 확인 화면
+        System.out.println("Step 5: 주문 확인 화면을 출력합니다.");
+        System.out.println("─────────────────────────────────");
+        System.out.println("[주문 확인]");
+        System.out.println("프로그램명 : " + selected.getProductName());
+        System.out.println("담당 강사  : " + trainerName);
+        System.out.println("시작 희망일: " + startDate);
+        System.out.printf("결제 금액  : %,d원%n", selected.getPrice());
+        System.out.println("─────────────────────────────────");
+        System.out.println("결제를 진행하시겠습니까? (Y/N)");
+        System.out.print("> ");
+        if (!scanner.nextLine().trim().equalsIgnoreCase("Y")) return;
+
+        // Step 6: 결제 (UC07)
+        System.out.println("Step 6: 결제 유스케이스(UC07)를 실행합니다.");
+        boolean paid = handlePay(selected.getPrice(), selected.getProductId(), "PROGRAM");
+        if (!paid) return;
+
+        // Step 7: 프로그램 등록 (E2)
+        System.out.println("Step 7: 프로그램을 계정에 등록합니다.");
+        String orderId = "order-" + String.format("%03d", orders.size() + 1);
+        Order order = new Order(orderId, currentMember.getMemberId(), selected.getProductId(),
+                1, selected.getPrice(), "", "COMPLETED", LocalDateTime.now());
+        if (!order.init()) {
+            System.out.println("프로그램 등록에 실패하였습니다. 고객센터에 문의해주세요.");
+            return;
+        }
+        orders.add(order);
+        selected.setRemainingCapacity(selected.getRemainingCapacity() - 1);
+        System.out.println("헬스 프로그램 구매가 완료되었습니다.");
+    }
+
+    private Trainer findTrainer(String trainerId) {
+        for (Trainer t : trainers) {
+            if (t.getTrainerId().equals(trainerId)) return t;
+        }
+        return null;
+    }
+
+    private void handlePurchaseEquipment() {
+        // Step 1: 운동용품 목록 출력 (A1: 필터 포함)
+        System.out.println("Step 1: 판매 중인 운동용품 목록을 출력합니다.");
+        List<SportEquipment> displayList = new ArrayList<>(sportEquipmentCatalog);
+
+        System.out.println("F. 카테고리 필터 / 검색어 입력   0. 돌아가기");
+        printSportEquipmentList(displayList);
+
+        // A1: 검색/필터 루프
+        while (true) {
+            System.out.print("> ");
+            String input = scanner.nextLine().trim();
+
+            if (input.equals("0")) return;
+
+            if (input.equalsIgnoreCase("F")) {
+                System.out.println("검색어 또는 카테고리(헬스용품/의류/보충제)를 입력하세요.");
+                System.out.print("> ");
+                String keyword = scanner.nextLine().trim();
+                displayList = new ArrayList<>();
+                for (SportEquipment se : sportEquipmentCatalog) {
+                    if (se.getProductName().contains(keyword) || se.getCategory().contains(keyword)) {
+                        displayList.add(se);
+                    }
+                }
+                if (displayList.isEmpty()) {
+                    System.out.println("검색 결과가 없습니다. 전체 목록을 표시합니다.");
+                    displayList = new ArrayList<>(sportEquipmentCatalog);
+                }
+                printSportEquipmentList(displayList);
+                continue;
+            }
+
+            // 상품 선택
+            try {
+                int idx = Integer.parseInt(input) - 1;
+                if (idx < 0 || idx >= displayList.size()) {
+                    System.out.println("올바른 번호를 입력해주세요.");
+                    continue;
+                }
+                SportEquipment selected = displayList.get(idx);
+
+                // Step 2: 상세 정보 출력
+                System.out.println("Step 2: 선택한 상품의 상세 정보를 출력합니다.");
+                System.out.println("─────────────────────────────────");
+                System.out.println("상품명   : " + selected.getProductName());
+                System.out.println("카테고리 : " + selected.getCategory());
+                System.out.printf("가격     : %,d원%n", selected.getPrice());
+                System.out.println("설명     : " + selected.getDescription());
+                System.out.println("재고     : " + selected.getStock() + "개");
+                System.out.println("─────────────────────────────────");
+
+                // Step 3: 수량 입력
+                System.out.println("Step 3: 구매 수량을 입력합니다.");
+                int quantity = 0;
+                while (quantity <= 0) {
+                    System.out.print("수량: ");
+                    try {
+                        quantity = Integer.parseInt(scanner.nextLine().trim());
+                        if (quantity <= 0) {
+                            System.out.println("1 이상의 수량을 입력해주세요.");
+                        } else if (quantity > selected.getStock()) {
+                            System.out.println("재고가 부족합니다. (현재 재고: " + selected.getStock() + "개)");
+                            quantity = 0;
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("숫자를 입력해주세요.");
+                    }
+                }
+
+                // Step 4: 배송지 입력 (A2, E2)
+                System.out.println("Step 4: 배송지 정보를 입력합니다.");
+                System.out.println("1. 기존 배송지 사용 (" + currentMember.getAddress() + ")");
+                System.out.println("2. 새 배송지 입력");
+                System.out.print("> ");
+                String addrChoice = scanner.nextLine().trim();
+
+                String shippingAddress;
+                if (addrChoice.equals("1")) {
+                    shippingAddress = currentMember.getAddress();
+                    if (shippingAddress == null || shippingAddress.isEmpty()) {
+                        System.out.println("올바른 배송지 정보를 입력해주세요.");
+                        return;
+                    }
+                } else {
+                    System.out.print("배송지 주소: ");
+                    shippingAddress = scanner.nextLine().trim();
+                    if (shippingAddress.isEmpty()) {
+                        System.out.println("올바른 배송지 정보를 입력해주세요.");
+                        return;
+                    }
+                }
+
+                int totalAmount = selected.getPrice() * quantity;
+
+                // Step 5: 주문 확인 화면
+                System.out.println("Step 5: 주문 확인 화면을 출력합니다.");
+                System.out.println("─────────────────────────────────");
+                System.out.println("[주문 확인]");
+                System.out.println("상품명   : " + selected.getProductName());
+                System.out.println("수량     : " + quantity + "개");
+                System.out.println("배송지   : " + shippingAddress);
+                System.out.printf("결제 금액 : %,d원%n", totalAmount);
+                System.out.println("─────────────────────────────────");
+                System.out.println("결제를 진행하시겠습니까? (Y/N)");
+                System.out.print("> ");
+                if (!scanner.nextLine().trim().equalsIgnoreCase("Y")) return;
+
+                // Step 6: 결제 (UC07)
+                System.out.println("Step 6: 결제 유스케이스(UC07)를 실행합니다.");
+                boolean paid = handlePay(totalAmount, selected.getProductId(), "SPORT_EQUIPMENT");
+                if (!paid) return;
+
+                // Step 7: 주문 등록 (E1)
+                System.out.println("Step 7: 주문을 등록합니다.");
+                String orderId = "order-" + String.format("%03d", orders.size() + 1);
+                Order order = new Order(orderId, currentMember.getMemberId(), selected.getProductId(),
+                        quantity, totalAmount, shippingAddress, "COMPLETED", LocalDateTime.now());
+                if (!order.init()) {
+                    System.out.println("주문 등록에 실패하였습니다. 고객센터에 문의해주세요.");
+                    return;
+                }
+                orders.add(order);
+                selected.setStock(selected.getStock() - quantity);
+                System.out.println("운동용품 구매가 완료되었습니다.");
+                System.out.println("주문 번호: " + orderId);
+                return;
+
+            } catch (NumberFormatException e) {
+                System.out.println("올바른 번호를 입력해주세요.");
+            }
+        }
+    }
+
+    private void printSportEquipmentList(List<SportEquipment> list) {
+        for (int i = 0; i < list.size(); i++) {
+            SportEquipment se = list.get(i);
+            System.out.printf("%d. [%s] %-14s %,6d원 | 재고: %d개%n",
+                    i + 1, se.getCategory(), se.getProductName(), se.getPrice(), se.getStock());
+        }
+    }
 
     private void handlePurchasePT() {}          // UC06
 
-    private boolean handlePay(int amount) { return false; }  // UC07
+    private boolean handlePay(int amount, String productId, String productType) {
+        System.out.println("Step 1: 결제 수단 선택 화면을 출력합니다.");
+        System.out.println("1. 신용카드");
+        System.out.println("2. 체크카드");
+        System.out.println("3. 간편결제");
+        System.out.println("0. 취소");
+        System.out.print("> ");
+
+        String methodInput = scanner.nextLine().trim();
+        String paymentMethod = switch (methodInput) {
+            case "1" -> "신용카드";
+            case "2" -> "체크카드";
+            case "3" -> "간편결제";
+            default  -> null;
+        };
+        if (paymentMethod == null) {
+            System.out.println("결제가 취소되었습니다.");
+            return false;
+        }
+
+        System.out.print("카드 번호 (예: 1234-5678-9012-3456): ");
+        scanner.nextLine();
+
+        // Step 2: 포인트 잔액 조회 (A1)
+        System.out.println("Step 2: 보유 포인트 잔액을 조회합니다.");
+        Point memberPoint = null;
+        for (Point p : points) {
+            if (p.getMemberId().equals(currentMember.getMemberId())) {
+                memberPoint = p;
+                break;
+            }
+        }
+        int pointBalance = (memberPoint != null) ? memberPoint.getBalance() : 0;
+        int usedPoints = 0;
+        int finalAmount = amount;
+
+        System.out.printf("보유 포인트: %,d점%n", pointBalance);
+        if (pointBalance > 0) {
+            System.out.println("포인트를 사용하시겠습니까? (Y/N)");
+            System.out.print("> ");
+            if (scanner.nextLine().trim().equalsIgnoreCase("Y")) {
+                while (true) {
+                    System.out.printf("사용할 포인트 (0 ~ %,d): ", pointBalance);
+                    try {
+                        usedPoints = Integer.parseInt(scanner.nextLine().trim());
+                        if (usedPoints < 0 || usedPoints > pointBalance) {
+                            System.out.println("올바른 포인트 금액을 입력해주세요.");
+                            continue;
+                        }
+                        if (usedPoints > amount) usedPoints = amount;
+                        finalAmount = amount - usedPoints;
+                        break;
+                    } catch (NumberFormatException e) {
+                        System.out.println("숫자를 입력해주세요.");
+                    }
+                }
+                System.out.printf("포인트 사용 후 결제 금액: %,d원%n", finalAmount);
+            }
+        }
+
+        // Step 3: 최종 결제 확인
+        System.out.println("─────────────────────────────────");
+        System.out.printf("결제 수단  : %s%n", paymentMethod);
+        System.out.printf("사용 포인트: %,d점%n", usedPoints);
+        System.out.printf("최종 금액  : %,d원%n", finalAmount);
+        System.out.println("─────────────────────────────────");
+        System.out.println("[결제하기] 진행하시려면 Y를 입력하세요.");
+        System.out.print("> ");
+        if (!scanner.nextLine().trim().equalsIgnoreCase("Y")) {
+            System.out.println("결제가 취소되었습니다.");
+            return false;
+        }
+
+        // 결제 처리
+        String paymentId = "pay-" + String.format("%03d", payments.size() + 1);
+        Payment payment = new Payment(paymentId, currentMember.getMemberId(), productId, productType,
+                paymentMethod, finalAmount, usedPoints, "COMPLETED", LocalDateTime.now());
+        if (!payment.init()) {
+            System.out.println("결제 서버와의 연결에 실패하였습니다. 잠시 후 다시 시도해주세요.");
+            return false;
+        }
+        payments.add(payment);
+
+        // 포인트 차감
+        if (usedPoints > 0 && memberPoint != null) {
+            memberPoint.setBalance(memberPoint.getBalance() - usedPoints);
+            String histId = "ph-" + String.format("%03d", pointHistories.size() + 1);
+            pointHistories.add(new PointHistory(histId, currentMember.getMemberId(),
+                    "사용", -usedPoints, productType + " 결제 포인트 사용",
+                    LocalDate.now(), memberPoint.getBalance()));
+        }
+
+        System.out.println("Step 3: 결제가 완료되었습니다.");
+        return true;
+    }
 
     private void handleCheckAttendance() {} // UC08
 
