@@ -1,5 +1,6 @@
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -856,7 +857,202 @@ public class SubMain {
         }
     }
 
-    private void handlePurchasePT() {}          // UC06
+    private void handlePurchasePT() {
+        // Step 1: 트레이너 목록 출력 (A1: 필터 포함)
+        System.out.println("Step 1: 소속 트레이너 목록을 출력합니다.");
+        List<Trainer> displayTrainers = new ArrayList<>(trainers);
+        printTrainerList(displayTrainers);
+        System.out.println("F. 전문 분야 필터   0. 돌아가기");
+
+        Trainer selectedTrainer = null;
+        while (selectedTrainer == null) {
+            System.out.print("> ");
+            String input = scanner.nextLine().trim();
+
+            if (input.equals("0")) return;
+
+            if (input.equalsIgnoreCase("F")) {
+                System.out.print("전문 분야 키워드 입력 (예: 요가, 웨이트): ");
+                String keyword = scanner.nextLine().trim();
+                displayTrainers = new ArrayList<>();
+                for (Trainer t : trainers) {
+                    if (t.getSpecialty().contains(keyword)) displayTrainers.add(t);
+                }
+                if (displayTrainers.isEmpty()) {
+                    System.out.println("해당 조건의 트레이너가 없습니다. 전체 목록을 표시합니다.");
+                    displayTrainers = new ArrayList<>(trainers);
+                }
+                printTrainerList(displayTrainers);
+                System.out.println("F. 전문 분야 필터   0. 돌아가기");
+                continue;
+            }
+
+            try {
+                int idx = Integer.parseInt(input) - 1;
+                if (idx >= 0 && idx < displayTrainers.size()) {
+                    selectedTrainer = displayTrainers.get(idx);
+                } else {
+                    System.out.println("올바른 번호를 입력해주세요.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("올바른 번호를 입력해주세요.");
+            }
+        }
+
+        // Step 2: 트레이너 상세 프로필 + PT 프로그램 출력
+        System.out.println("Step 2: 선택한 트레이너의 상세 프로필을 출력합니다.");
+        System.out.println("─────────────────────────────────");
+        System.out.println("이름      : " + selectedTrainer.getName());
+        System.out.println("경력      : " + selectedTrainer.getCareer());
+        System.out.println("자격증    : " + selectedTrainer.getCertification());
+        System.out.println("전문 분야 : " + selectedTrainer.getSpecialty());
+        System.out.printf("평점      : %.1f%n", selectedTrainer.getRating());
+        System.out.println("─────────────────────────────────");
+        System.out.println("[PT 프로그램]");
+        for (int i = 0; i < ptCatalog.size(); i++) {
+            PT pt = ptCatalog.get(i);
+            System.out.printf("%d. %-10s %,d원%n", i + 1, pt.getProductName(), pt.getPrice());
+        }
+        System.out.println("0. 돌아가기");
+
+        PT selectedPT = null;
+        while (selectedPT == null) {
+            System.out.print("> ");
+            String input = scanner.nextLine().trim();
+            if (input.equals("0")) return;
+            try {
+                int idx = Integer.parseInt(input) - 1;
+                if (idx >= 0 && idx < ptCatalog.size()) {
+                    selectedPT = ptCatalog.get(idx);
+                } else {
+                    System.out.println("올바른 번호를 입력해주세요.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("올바른 번호를 입력해주세요.");
+            }
+        }
+
+        // Step 3: 트레이너 스케줄 출력 (E3)
+        System.out.println("Step 3: 트레이너의 예약 가능한 스케줄을 출력합니다.");
+        LocalTime[] timeSlots = {LocalTime.of(10, 0), LocalTime.of(14, 0), LocalTime.of(18, 0)};
+        LocalDate today = LocalDate.now();
+
+        System.out.println("날짜             시간    상태");
+        System.out.println("─────────────────────────────────");
+        int slotNo = 1;
+        List<LocalDate> slotDates = new ArrayList<>();
+        List<LocalTime> slotTimes = new ArrayList<>();
+
+        for (int d = 1; d <= 7; d++) {
+            LocalDate date = today.plusDays(d);
+            for (LocalTime time : timeSlots) {
+                boolean booked = false;
+                for (PTSchedule s : ptSchedules) {
+                    if (s.getTrainerId().equals(selectedTrainer.getTrainerId())
+                            && s.getDate().equals(date) && s.getTime().equals(time)) {
+                        booked = true;
+                        break;
+                    }
+                }
+                String status = booked ? "[예약됨]" : "[예약 가능]";
+                System.out.printf("%2d. %s  %s  %s%n", slotNo, date, time, status);
+                slotDates.add(date);
+                slotTimes.add(time);
+                slotNo++;
+            }
+        }
+        System.out.println("0. 돌아가기");
+
+        // Step 4: 일정 선택 (A2)
+        LocalDate chosenDate = null;
+        LocalTime chosenTime = null;
+        while (chosenDate == null) {
+            System.out.print("> ");
+            String input = scanner.nextLine().trim();
+            if (input.equals("0")) return;
+            try {
+                int idx = Integer.parseInt(input) - 1;
+                if (idx < 0 || idx >= slotDates.size()) {
+                    System.out.println("올바른 번호를 입력해주세요.");
+                    continue;
+                }
+                LocalDate candidateDate = slotDates.get(idx);
+                LocalTime candidateTime = slotTimes.get(idx);
+
+                // A2: 이미 예약된 슬롯 확인
+                boolean alreadyBooked = false;
+                for (PTSchedule s : ptSchedules) {
+                    if (s.getTrainerId().equals(selectedTrainer.getTrainerId())
+                            && s.getDate().equals(candidateDate)
+                            && s.getTime().equals(candidateTime)) {
+                        alreadyBooked = true;
+                        break;
+                    }
+                }
+                if (alreadyBooked) {
+                    System.out.println("선택하신 시간은 이미 예약되어 있습니다.");
+                    continue;
+                }
+                chosenDate = candidateDate;
+                chosenTime = candidateTime;
+            } catch (NumberFormatException e) {
+                System.out.println("올바른 번호를 입력해주세요.");
+            }
+        }
+
+        // Step 5: 주문 확인 화면
+        System.out.println("Step 5: 주문 확인 화면을 출력합니다.");
+        System.out.println("─────────────────────────────────");
+        System.out.println("[주문 확인]");
+        System.out.println("트레이너  : " + selectedTrainer.getName());
+        System.out.println("PT 프로그램: " + selectedPT.getProductName());
+        System.out.println("첫 일정   : " + chosenDate + " " + chosenTime);
+        System.out.printf("결제 금액  : %,d원%n", selectedPT.getPrice());
+        System.out.println("─────────────────────────────────");
+        System.out.println("결제를 진행하시겠습니까? (Y/N)");
+        System.out.print("> ");
+        if (!scanner.nextLine().trim().equalsIgnoreCase("Y")) return;
+
+        // Step 6: 결제 (UC07)
+        System.out.println("Step 6: 결제 유스케이스(UC07)를 실행합니다.");
+        boolean paid = handlePay(selectedPT.getPrice(), selectedPT.getProductId(), "PT");
+        if (!paid) return;
+
+        // Step 7: PT 이용권 등록 (E2)
+        System.out.println("Step 7: PT 이용권을 계정에 등록합니다.");
+        String newPtId = "pt-" + String.format("%03d", memberPTs.size() + 1);
+        PT newPT = new PT(selectedPT.getProductId(), selectedPT.getProductName(),
+                selectedPT.getPrice(), selectedPT.getDescription(),
+                newPtId, currentMember.getMemberId(), selectedTrainer.getTrainerId(),
+                selectedPT.getTotalCount(), selectedPT.getRemainingCount(), "ACTIVE");
+        if (!newPT.init()) {
+            System.out.println("PT 이용권 등록에 실패하였습니다. 고객센터에 문의해주세요.");
+            return;
+        }
+
+        // 첫 PT 일정 등록
+        String scheduleId = "sched-" + String.format("%03d", ptSchedules.size() + 1);
+        PTSchedule firstSchedule = new PTSchedule(scheduleId, newPtId,
+                currentMember.getMemberId(), selectedTrainer.getTrainerId(),
+                chosenDate, chosenTime, "RESERVED");
+        if (!firstSchedule.init()) {
+            System.out.println("PT 이용권 등록에 실패하였습니다. 고객센터에 문의해주세요.");
+            return;
+        }
+
+        memberPTs.add(newPT);
+        ptSchedules.add(firstSchedule);
+        System.out.println("[알림] " + selectedTrainer.getName() + " 트레이너에게 신규 PT 신청 알림을 전송했습니다.");
+        System.out.println("PT 구매가 완료되었습니다.");
+    }
+
+    private void printTrainerList(List<Trainer> list) {
+        for (int i = 0; i < list.size(); i++) {
+            Trainer t = list.get(i);
+            System.out.printf("%d. %-6s | 전문: %-14s | %s | 평점: %.1f%n",
+                    i + 1, t.getName(), t.getSpecialty(), t.getCareer(), t.getRating());
+        }
+    }
 
     private boolean handlePay(int amount, String productId, String productType) {
         System.out.println("Step 1: 결제 수단 선택 화면을 출력합니다.");
@@ -954,7 +1150,60 @@ public class SubMain {
         return true;
     }
 
-    private void handleCheckAttendance() {} // UC08
+    private void handleCheckAttendance() {
+        System.out.println("Step 1: 당일 출석 여부를 확인합니다.");
+        LocalDate today = LocalDate.now();
+
+        // A1: 당일 이미 출석한 경우
+        for (Attendance a : attendances) {
+            if (a.getMemberId().equals(currentMember.getMemberId())
+                    && a.getAttendanceDateTime().toLocalDate().equals(today)) {
+                System.out.println("오늘은 이미 출석이 완료되었습니다.");
+                return;
+            }
+        }
+
+        // Step 2: QR 코드 생성 (E1)
+        System.out.println("Step 2: 출석 QR 코드를 생성합니다.");
+        String qrCode = "QR-" + currentMember.getMemberId() + "-" + today;
+
+        while (true) {
+            System.out.println("┌─────────────────────────────────────┐");
+            System.out.println("│           [출석 QR 코드]              │");
+            System.out.printf( "│  %-35s│%n", qrCode);
+            System.out.println("└─────────────────────────────────────┘");
+            System.out.println("Enter: 스캔   R: QR 재발급");
+            System.out.print("> ");
+            String input = scanner.nextLine().trim();
+
+            if (input.equalsIgnoreCase("R")) {
+                // E2: QR 재발급
+                qrCode = "QR-" + currentMember.getMemberId() + "-" + today + "-NEW";
+                System.out.println("QR 코드가 재발급되었습니다.");
+                continue;
+            }
+
+            // Step 3: QR 유효성 검증 (E3)
+            System.out.println("Step 3: QR 코드의 유효성을 검증합니다.");
+            if (!qrCode.startsWith("QR-" + currentMember.getMemberId())) {
+                System.out.println("유효하지 않은 QR 코드입니다. 앱에서 QR 코드를 다시 확인해주세요.");
+                return;
+            }
+            break;
+        }
+
+        // Step 4: 출석 기록
+        System.out.println("Step 4: 출석을 기록합니다.");
+        String attendanceId = "att-" + String.format("%03d", attendances.size() + 1);
+        Attendance attendance = new Attendance(attendanceId, currentMember.getMemberId(),
+                LocalDateTime.now(), "QR");
+        if (!attendance.init()) {
+            System.out.println("QR 코드 생성에 실패하였습니다. 잠시 후 다시 시도해주세요.");
+            return;
+        }
+        attendances.add(attendance);
+        System.out.println("출석이 완료되었습니다.");
+    }
 
     private void handleRecordExercise() {}  // UC09
 
