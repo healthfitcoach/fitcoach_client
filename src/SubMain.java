@@ -1208,9 +1208,201 @@ public class SubMain {
         System.out.println("출석이 완료되었습니다.");
     }
 
-    private void handleRecordExercise() {}  // UC09
+    private void handleRecordExercise() {
+        // E3: 활성 회원권 확인
+        boolean hasActive = false;
+        for (Membership ms : memberMemberships) {
+            if (ms.getMemberId().equals(currentMember.getMemberId())
+                    && "ACTIVE".equals(ms.getStatus())) {
+                hasActive = true;
+                break;
+            }
+        }
+        if (!hasActive) {
+            System.out.println("활성화된 회원권이 없습니다. 회원권을 먼저 구매해주세요.");
+            return;
+        }
 
-    private void handleEarnPoints() {}      // UC10
+        // Step 2: 운동 기록 입력 화면 출력
+        System.out.println("Step 2: 운동 기록 입력 화면을 출력합니다.");
+
+        // Step 3: 날짜 선택 (A1: 오늘 자동)
+        System.out.println("Step 3: 운동 날짜를 선택합니다.");
+        System.out.println("1. 오늘 날짜 자동 선택 (" + LocalDate.now() + ")");
+        System.out.println("2. 날짜 직접 입력 (yyyy-MM-dd)");
+        System.out.print("> ");
+
+        LocalDate exerciseDate;
+        if (scanner.nextLine().trim().equals("2")) {
+            LocalDate parsed = null;
+            while (parsed == null) {
+                System.out.print("날짜 (yyyy-MM-dd): ");
+                try { parsed = LocalDate.parse(scanner.nextLine().trim()); }
+                catch (Exception e) { System.out.println("올바른 날짜 형식을 입력해주세요."); }
+            }
+            exerciseDate = parsed;
+        } else {
+            exerciseDate = LocalDate.now();
+        }
+
+        int totalExerciseTime = 0;
+        List<ExerciseRecord> sessionRecords = new ArrayList<>();
+
+        // Step 4~5: 운동 입력 루프 (A2: 복수 추가)
+        while (true) {
+            System.out.println("Step 4: 수행한 운동 종류를 입력합니다.");
+            System.out.print("운동 종류 (예: 벤치프레스, 러닝): ");
+            String exerciseType = scanner.nextLine().trim();
+
+            // E1: 필수 항목 미입력
+            if (exerciseType.isEmpty()) {
+                System.out.println("운동 종류와 운동 시간은 필수 입력 항목입니다.");
+                return;
+            }
+
+            System.out.println("Step 5: 운동 세부 정보를 입력합니다.");
+            int exerciseTime = readPositiveInt("운동 시간 (분)");
+            int sets         = readPositiveInt("세트 수");
+            int reps         = readPositiveInt("반복 횟수");
+            totalExerciseTime += exerciseTime;
+
+            // Step 7: 메모/사진 첨부 (A3: 선택)
+            System.out.println("Step 7: 추가 메모 또는 사진을 첨부합니다. (생략 시 Enter)");
+            System.out.print("메모: ");
+            String memo = scanner.nextLine().trim();
+            System.out.print("사진 파일명: ");
+            String photo = scanner.nextLine().trim();
+
+            String recordId = "rec-" + String.format("%03d", exerciseRecords.size() + sessionRecords.size() + 1);
+            ExerciseRecord record = new ExerciseRecord(recordId, currentMember.getMemberId(),
+                    exerciseDate, exerciseType, exerciseTime, sets, reps, memo, photo);
+            sessionRecords.add(record);
+
+            // A2: 운동 추가 여부
+            System.out.println("운동을 추가하시겠습니까? (Y: 추가   그 외: 저장)");
+            System.out.print("> ");
+            if (!scanner.nextLine().trim().equalsIgnoreCase("Y")) break;
+        }
+
+        // Step 8~9: 기록 저장 (E2) + UC10 포인트 지급
+        System.out.println("Step 8: 운동 기록을 저장합니다.");
+        for (ExerciseRecord r : sessionRecords) {
+            if (!r.init()) {
+                System.out.println("운동 기록 저장에 실패하였습니다. 잠시 후 다시 시도해주세요.");
+                return;
+            }
+            exerciseRecords.add(r);
+        }
+
+        System.out.println("Step 9: 포인트 지급 유스케이스(UC10)를 실행합니다.");
+        int earned = earnPoints(totalExerciseTime);
+
+        // Step 10: 완료 메시지
+        System.out.println("저장 완료! 지급된 포인트: " + Math.max(earned, 0) + "점");
+    }
+
+    private int readPositiveInt(String label) {
+        while (true) {
+            System.out.print(label + ": ");
+            try {
+                int value = Integer.parseInt(scanner.nextLine().trim());
+                if (value > 0) return value;
+                System.out.println("유효하지 않은 입력값입니다. 운동 횟수는 숫자로 작성하여 주세요.");
+            } catch (NumberFormatException e) {
+                System.out.println("유효하지 않은 입력값입니다. 운동 횟수는 숫자로 작성하여 주세요.");
+            }
+        }
+    }
+
+    private int earnPoints(int exerciseTime) {
+        // UC10: Step 1~2 - 정책 조회 및 포인트 산정 (A1: 시간 기준 미달)
+        if (pointPolicy == null) { return -1; }
+        int earned = pointPolicy.getBasePoints();
+        if (exerciseTime >= pointPolicy.getExerciseTimeStandard()) {
+            earned += pointPolicy.getTimeBonusPoints();
+        } else {
+            System.out.println("운동 시간이 기준(" + pointPolicy.getExerciseTimeStandard()
+                    + "분) 미만으로 기본 포인트만 지급됩니다.");
+        }
+
+        // UC10: Step 3 - 오늘 이미 적립 여부 확인 (A2)
+        LocalDate today = LocalDate.now();
+        for (PointHistory ph : pointHistories) {
+            if (ph.getMemberId().equals(currentMember.getMemberId())
+                    && ph.getDate().equals(today)
+                    && "운동적립".equals(ph.getType())) {
+                System.out.println("오늘은 이미 포인트가 적립되었습니다.");
+                return 0;
+            }
+        }
+
+        // UC10: Step 4~5 - 포인트 적립 및 이력 저장
+        Point memberPoint = null;
+        for (Point p : points) {
+            if (p.getMemberId().equals(currentMember.getMemberId())) { memberPoint = p; break; }
+        }
+        if (memberPoint == null) {
+            memberPoint = new Point("point-" + String.format("%03d", points.size() + 1),
+                    currentMember.getMemberId(), 0, today.plusYears(1));
+            if (!memberPoint.init()) {
+                System.out.println("포인트 적립 중 오류가 발생하였습니다. 고객센터에 문의해주세요.");
+                return -1;
+            }
+            points.add(memberPoint);
+        }
+        memberPoint.setBalance(memberPoint.getBalance() + earned);
+        pointHistories.add(new PointHistory(
+                "ph-" + String.format("%03d", pointHistories.size() + 1),
+                currentMember.getMemberId(), "운동적립", earned,
+                "운동 기록 포인트 적립", today, memberPoint.getBalance()));
+
+        // UC10: Step 6 - 연속 출석 보너스 확인 (A3)
+        int consecutive = countConsecutiveAttendance();
+        if (consecutive > 0 && consecutive % pointPolicy.getConsecutiveAttendanceDays() == 0) {
+            int bonus = pointPolicy.getConsecutiveAttendanceBonus();
+            memberPoint.setBalance(memberPoint.getBalance() + bonus);
+            pointHistories.add(new PointHistory(
+                    "ph-" + String.format("%03d", pointHistories.size() + 1),
+                    currentMember.getMemberId(), "연속출석보너스", bonus,
+                    consecutive + "일 연속 출석 달성 보너스", today, memberPoint.getBalance()));
+            earned += bonus;
+            System.out.printf("%d일 연속 출석 달성! 보너스 포인트 %d점이 추가 적립되었습니다.%n",
+                    consecutive, bonus);
+        }
+        return earned;
+    }
+
+    private int countConsecutiveAttendance() {
+        LocalDate check = LocalDate.now();
+        int count = 0;
+        while (true) {
+            final LocalDate d = check;
+            boolean found = false;
+            for (Attendance a : attendances) {
+                if (a.getMemberId().equals(currentMember.getMemberId())
+                        && a.getAttendanceDateTime().toLocalDate().equals(d)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) break;
+            count++;
+            check = check.minusDays(1);
+        }
+        return count;
+    }
+
+    private void handleEarnPoints() {
+        System.out.println("포인트는 운동 기록(메뉴 4번) 저장 시 자동으로 지급됩니다.");
+        int balance = 0;
+        for (Point p : points) {
+            if (p.getMemberId().equals(currentMember.getMemberId())) {
+                balance = p.getBalance();
+                break;
+            }
+        }
+        System.out.printf("현재 포인트 잔액: %,d점%n", balance);
+    }
 
     private void handleSearchEquipment() {} // UC11
 
