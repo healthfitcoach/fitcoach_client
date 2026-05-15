@@ -1619,7 +1619,81 @@ public class SubMain {
         System.out.println("─────────────────────────────────");
     }
 
-    private void handleManageMyInfo() {}    // UC14
+    private void handleManageMyInfo() {
+        // E2: 세션 확인
+        if (currentMember == null) {
+            System.out.println("로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
+            return;
+        }
+
+        while (true) {
+            // Step 2: 내정보 메인 화면 출력 (E1)
+            System.out.println("Step 2: 내정보 메인 화면을 출력합니다.");
+            if (!currentMember.init()) {
+                System.out.println("내정보를 불러오는 데 실패하였습니다. 잠시 후 다시 시도해주세요.");
+                return;
+            }
+
+            System.out.println("═════════════════════════════════");
+            System.out.println("[프로필 정보]");
+            System.out.println("이름     : " + currentMember.getName());
+            System.out.println("닉네임   : " + currentMember.getNickname());
+            System.out.println("아이디   : " + currentMember.getLoginId());
+            System.out.println("전화번호 : " + currentMember.getPhoneNumber());
+            System.out.println("생년월일 : " + currentMember.getBirthDate());
+            System.out.println("신체정보 : " + currentMember.getPhysicalInfo());
+            System.out.println("주소     : " + currentMember.getAddress());
+            System.out.println("가입일   : " + currentMember.getJoinDate());
+
+            // Step 3: 회원권 현황 요약 (UC16 요약)
+            System.out.println("─────────────────────────────────");
+            System.out.println("[회원권 현황]");
+            Membership active = null;
+            for (Membership ms : memberMemberships) {
+                if (ms.getMemberId().equals(currentMember.getMemberId())
+                        && "ACTIVE".equals(ms.getStatus())) {
+                    active = ms;
+                    break;
+                }
+            }
+            if (active == null) {
+                System.out.println("보유 중인 회원권이 없습니다.");
+            } else {
+                System.out.println("종류   : " + active.getProductName());
+                System.out.println("만료일 : " + active.getEndDate());
+                long remaining = java.time.temporal.ChronoUnit.DAYS.between(
+                        LocalDate.now(), active.getEndDate());
+                System.out.println("잔여   : " + remaining + "일");
+            }
+
+            // Step 4: 포인트 잔액 요약 (UC19 요약)
+            System.out.println("─────────────────────────────────");
+            System.out.println("[포인트 잔액]");
+            int balance = 0;
+            for (Point p : points) {
+                if (p.getMemberId().equals(currentMember.getMemberId())) {
+                    balance = p.getBalance();
+                    break;
+                }
+            }
+            System.out.printf("현재 포인트: %,d점%n", balance);
+            System.out.println("═════════════════════════════════");
+
+            // Step 6: 세부 메뉴 (A1, A2)
+            System.out.println("1. 내정보 수정   2. 회원권 관리   3. 포인트 내역");
+            System.out.println("0. 돌아가기");
+            System.out.print("> ");
+
+            String input = scanner.nextLine().trim();
+            switch (input) {
+                case "1" -> handleUpdateMyInfo();       // A1 → UC15
+                case "2" -> handleManageMembership();   // A2 → UC16
+                case "3" -> handleViewPointHistory();   // UC19
+                case "0" -> { return; }
+                default  -> System.out.println("올바른 메뉴를 선택해주세요.");
+            }
+        }
+    }
 
     private void handleUpdateMyInfo() {}    // UC15
 
