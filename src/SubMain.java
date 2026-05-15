@@ -1961,7 +1961,121 @@ public class SubMain {
         }
     }
 
-    private void handleManageAdditionalProduct() {} // UC18
+    private void handleManageAdditionalProduct() {
+        // E3: 활성 회원권 확인
+        if (findActiveMembership() == null) {
+            System.out.println("부가 상품은 활성화된 회원권 보유 시에만 신청 가능합니다.");
+            return;
+        }
+
+        while (true) {
+            // Step 2: 현재 이용 중인 부가 상품 목록 출력
+            System.out.println("Step 2: 현재 이용 중인 부가 상품 목록을 출력합니다.");
+            System.out.println("─────────────────────────────────");
+            System.out.println("[보유 부가 상품]");
+            List<String> additionalIds = new ArrayList<>();
+            for (AdditionalProduct ap : additionalProductCatalog) {
+                additionalIds.add(ap.getProductId());
+            }
+            List<Order> myAdOrders = new ArrayList<>();
+            for (Order o : orders) {
+                if (o.getMemberId().equals(currentMember.getMemberId())
+                        && additionalIds.contains(o.getProductId())) {
+                    myAdOrders.add(o);
+                }
+            }
+            if (myAdOrders.isEmpty()) {
+                System.out.println("이용 중인 부가 상품이 없습니다.");
+            } else {
+                for (Order o : myAdOrders) {
+                    String name = getProductNameById(o.getProductId());
+                    System.out.println("- " + name + " (주문일: " + o.getOrderDateTime().toLocalDate() + ")");
+                }
+            }
+
+            // Step 3: 신청 가능한 부가 상품 목록 출력 (E1)
+            System.out.println("─────────────────────────────────");
+            System.out.println("[신청 가능한 부가 상품]");
+            if (additionalProductCatalog.isEmpty()) {
+                System.out.println("부가 상품 정보를 불러오는 데 실패하였습니다. 잠시 후 다시 시도해주세요.");
+                return;
+            }
+            for (int i = 0; i < additionalProductCatalog.size(); i++) {
+                AdditionalProduct ap = additionalProductCatalog.get(i);
+                System.out.printf("%d. %-12s %,6d원 | 이용기간: %d일%n",
+                        i + 1, ap.getProductName(), ap.getPrice(), ap.getUsagePeriod());
+            }
+            System.out.println("0. 돌아가기");
+            System.out.print("> ");
+
+            String input = scanner.nextLine().trim();
+            if (input.equals("0")) return;
+
+            AdditionalProduct selected;
+            try {
+                int idx = Integer.parseInt(input) - 1;
+                if (idx < 0 || idx >= additionalProductCatalog.size()) {
+                    System.out.println("올바른 번호를 입력해주세요.");
+                    continue;
+                }
+                selected = additionalProductCatalog.get(idx);
+            } catch (NumberFormatException e) {
+                System.out.println("올바른 번호를 입력해주세요.");
+                continue;
+            }
+
+            // A1: 이미 동일 상품 이용 중 확인
+            boolean alreadyOwned = myAdOrders.stream()
+                    .anyMatch(o -> o.getProductId().equals(selected.getProductId()));
+            if (alreadyOwned) {
+                System.out.println("이미 해당 부가 상품을 이용 중입니다. 추가 구매하시겠습니까? (Y/N)");
+                System.out.print("> ");
+                if (!scanner.nextLine().trim().equalsIgnoreCase("Y")) continue;
+            }
+
+            // Step 5: 상세 정보 및 신청 확인 화면
+            System.out.println("Step 5: 선택한 부가 상품의 상세 정보를 출력합니다.");
+            System.out.println("─────────────────────────────────");
+            System.out.println("[신청 확인]");
+            System.out.println("상품명   : " + selected.getProductName());
+            System.out.println("설명     : " + selected.getDescription());
+            System.out.println("이용기간 : " + selected.getUsagePeriod() + "일");
+            System.out.printf("가격     : %,d원%n", selected.getPrice());
+            System.out.println("─────────────────────────────────");
+            System.out.println("[결제 및 신청] 진행하시겠습니까? (Y/N)");
+            System.out.print("> ");
+            if (!scanner.nextLine().trim().equalsIgnoreCase("Y")) continue;
+
+            // Step 7: 결제 (UC07)
+            System.out.println("Step 7: 결제 유스케이스(UC07)를 실행합니다.");
+            boolean paid = handlePay(selected.getPrice(), selected.getProductId(), "ADDITIONAL");
+            if (!paid) continue;
+
+            // Step 8: 부가 상품 등록 (E2)
+            System.out.println("Step 8: 부가 상품을 계정에 등록합니다.");
+            String orderId = "order-" + String.format("%03d", orders.size() + 1);
+            Order order = new Order(orderId, currentMember.getMemberId(), selected.getProductId(),
+                    1, selected.getPrice(), "", "COMPLETED", LocalDateTime.now());
+            if (!order.init()) {
+                System.out.println("부가 상품 등록에 실패하였습니다. 고객센터에 문의해주세요.");
+                return;
+            }
+            orders.add(order);
+
+            // Step 9: 완료 메시지
+            System.out.println("부가 상품 신청이 완료되었습니다.");
+            System.out.println("[신청 내역] " + selected.getProductName()
+                    + " | 이용기간: " + selected.getUsagePeriod() + "일"
+                    + " | 주문번호: " + orderId);
+        }
+    }
+
+    private String getProductNameById(String productId) {
+        for (AdditionalProduct ap : additionalProductCatalog) {
+            if (ap.getProductId().equals(productId)) return ap.getProductName();
+        }
+        return productId;
+    }
 
     private void handleViewPointHistory() {}        // UC19
 
