@@ -2201,7 +2201,154 @@ public class SubMain {
         }
     }
 
-    private void handleSchedulePT() {}              // UC20
+    private void handleSchedulePT() {
+        // A1: 등록된 PT 이용권 확인
+        List<PT> myPTs = new ArrayList<>();
+        for (PT pt : memberPTs) {
+            if (pt.getMemberId().equals(currentMember.getMemberId())
+                    && "ACTIVE".equals(pt.getStatus())
+                    && pt.getRemainingCount() > 0) {
+                myPTs.add(pt);
+            }
+        }
+        if (myPTs.isEmpty()) {
+            System.out.println("등록된 PT 이용권이 없습니다. PT를 먼저 구매해주세요.");
+            return;
+        }
+
+        // PT 이용권이 여러 개면 선택
+        PT selectedPT;
+        if (myPTs.size() == 1) {
+            selectedPT = myPTs.get(0);
+        } else {
+            System.out.println("Step 1: 예약할 PT 이용권을 선택합니다.");
+            for (int i = 0; i < myPTs.size(); i++) {
+                PT pt = myPTs.get(i);
+                Trainer t = findTrainer(pt.getTrainerId());
+                String tName = (t != null) ? t.getName() : "미정";
+                System.out.printf("%d. %s | 트레이너: %s | 잔여: %d회%n",
+                        i + 1, pt.getProductName(), tName, pt.getRemainingCount());
+            }
+            System.out.print("> ");
+            int idx = 0;
+            try {
+                idx = Integer.parseInt(scanner.nextLine().trim()) - 1;
+                if (idx < 0 || idx >= myPTs.size()) {
+                    System.out.println("올바른 번호를 입력해주세요.");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("올바른 번호를 입력해주세요.");
+                return;
+            }
+            selectedPT = myPTs.get(idx);
+        }
+
+        Trainer trainer = findTrainer(selectedPT.getTrainerId());
+        if (trainer == null) {
+            System.out.println("트레이너 스케줄 정보를 불러오는 데 실패하였습니다. 잠시 후 다시 시도해주세요.");
+            return;
+        }
+
+        // Step 2: 트레이너 스케줄 출력 (E1)
+        System.out.println("Step 2: " + trainer.getName() + " 트레이너의 예약 가능한 스케줄을 출력합니다.");
+        System.out.printf("이용권: %s | 잔여 횟수: %d회%n",
+                selectedPT.getProductName(), selectedPT.getRemainingCount());
+
+        LocalTime[] timeSlots = {LocalTime.of(10, 0), LocalTime.of(14, 0), LocalTime.of(18, 0)};
+        LocalDate today = LocalDate.now();
+
+        System.out.println("─────────────────────────────────");
+        System.out.println("No.  날짜          시간     상태");
+        List<LocalDate> slotDates = new ArrayList<>();
+        List<LocalTime> slotTimes = new ArrayList<>();
+
+        int slotNo = 1;
+        for (int d = 1; d <= 7; d++) {
+            LocalDate date = today.plusDays(d);
+            for (LocalTime time : timeSlots) {
+                boolean booked = false;
+                for (PTSchedule s : ptSchedules) {
+                    if (s.getTrainerId().equals(trainer.getTrainerId())
+                            && s.getDate().equals(date)
+                            && s.getTime().equals(time)) {
+                        booked = true;
+                        break;
+                    }
+                }
+                String status = booked ? "[예약됨]  " : "[예약 가능]";
+                System.out.printf("%2d.  %s  %s  %s%n", slotNo, date, time, status);
+                slotDates.add(date);
+                slotTimes.add(time);
+                slotNo++;
+            }
+        }
+        System.out.println("─────────────────────────────────");
+        System.out.println("0. 돌아가기");
+
+        // Step 3: 일정 선택
+        LocalDate chosenDate = null;
+        LocalTime chosenTime = null;
+        while (chosenDate == null) {
+            System.out.print("> ");
+            String input = scanner.nextLine().trim();
+            if (input.equals("0")) return;
+            try {
+                int idx = Integer.parseInt(input) - 1;
+                if (idx < 0 || idx >= slotDates.size()) {
+                    System.out.println("올바른 번호를 입력해주세요.");
+                    continue;
+                }
+                LocalDate cDate = slotDates.get(idx);
+                LocalTime cTime = slotTimes.get(idx);
+
+                boolean alreadyBooked = false;
+                for (PTSchedule s : ptSchedules) {
+                    if (s.getTrainerId().equals(trainer.getTrainerId())
+                            && s.getDate().equals(cDate)
+                            && s.getTime().equals(cTime)) {
+                        alreadyBooked = true;
+                        break;
+                    }
+                }
+                if (alreadyBooked) {
+                    System.out.println("선택하신 시간은 이미 예약되어 있습니다.");
+                    continue;
+                }
+                chosenDate = cDate;
+                chosenTime = cTime;
+            } catch (NumberFormatException e) {
+                System.out.println("올바른 번호를 입력해주세요.");
+            }
+        }
+
+        // Step 4: 예약 확인 화면
+        System.out.println("Step 4: 예약 확인 화면을 출력합니다.");
+        System.out.println("─────────────────────────────────");
+        System.out.println("[예약 확인]");
+        System.out.println("트레이너 : " + trainer.getName());
+        System.out.println("날짜     : " + chosenDate);
+        System.out.println("시간     : " + chosenTime);
+        System.out.println("─────────────────────────────────");
+        System.out.println("[예약 확정] 진행하시겠습니까? (Y/N)");
+        System.out.print("> ");
+        if (!scanner.nextLine().trim().equalsIgnoreCase("Y")) return;
+
+        // Step 6: 예약 저장 (E2)
+        String scheduleId = "sched-" + String.format("%03d", ptSchedules.size() + 1);
+        PTSchedule newSchedule = new PTSchedule(scheduleId, selectedPT.getPtId(),
+                currentMember.getMemberId(), trainer.getTrainerId(),
+                chosenDate, chosenTime, "RESERVED");
+        if (!newSchedule.init()) {
+            System.out.println("예약 처리 중 오류가 발생하였습니다. 잠시 후 다시 시도해주세요.");
+            return;
+        }
+        ptSchedules.add(newSchedule);
+        selectedPT.setRemainingCount(selectedPT.getRemainingCount() - 1);
+
+        System.out.println("[알림] " + trainer.getName() + " 트레이너에게 신규 예약 알림을 전송했습니다.");
+        System.out.println("Step 7: PT 일정이 예약되었습니다.");
+    }
 
     // -------------------------
     // 유틸리티
