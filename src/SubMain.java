@@ -1151,10 +1151,9 @@ public class SubMain {
     }
 
     private void handleCheckAttendance() {
-        System.out.println("Step 1: 당일 출석 여부를 확인합니다.");
+        // Step 2: 당일 출석 여부 확인 (A1)
+        System.out.println("Step 2: 당일 출석 여부를 확인합니다.");
         LocalDate today = LocalDate.now();
-
-        // A1: 당일 이미 출석한 경우
         for (Attendance a : attendances) {
             if (a.getMemberId().equals(currentMember.getMemberId())
                     && a.getAttendanceDateTime().toLocalDate().equals(today)) {
@@ -1163,9 +1162,13 @@ public class SubMain {
             }
         }
 
-        // Step 2: QR 코드 생성 (E1)
-        System.out.println("Step 2: 출석 QR 코드를 생성합니다.");
+        // Step 3: QR 코드 생성 (E1)
+        System.out.println("Step 3: 출석 QR 코드를 생성합니다.");
         String qrCode = "QR-" + currentMember.getMemberId() + "-" + today;
+        if (qrCode.isEmpty()) {
+            System.out.println("QR 코드 생성에 실패하였습니다. 잠시 후 다시 시도해주세요.");
+            return;
+        }
 
         while (true) {
             System.out.println("┌─────────────────────────────────────┐");
@@ -1176,15 +1179,16 @@ public class SubMain {
             System.out.print("> ");
             String input = scanner.nextLine().trim();
 
+            // E2: QR 코드 스캔 시간 초과 → 재발급
             if (input.equalsIgnoreCase("R")) {
-                // E2: QR 재발급
-                qrCode = "QR-" + currentMember.getMemberId() + "-" + today + "-NEW";
-                System.out.println("QR 코드가 재발급되었습니다.");
+                System.out.println("QR 코드가 만료되었습니다. 새로운 QR 코드를 발급해주세요.");
+                qrCode = "QR-" + currentMember.getMemberId() + "-" + today + "-" + System.currentTimeMillis() % 10000;
+                System.out.println("새로운 QR 코드가 발급되었습니다.");
                 continue;
             }
 
-            // Step 3: QR 유효성 검증 (E3)
-            System.out.println("Step 3: QR 코드의 유효성을 검증합니다.");
+            // Step 5: QR 유효성 검증 (E3)
+            System.out.println("Step 5: QR 코드의 유효성을 검증합니다.");
             if (!qrCode.startsWith("QR-" + currentMember.getMemberId())) {
                 System.out.println("유효하지 않은 QR 코드입니다. 앱에서 QR 코드를 다시 확인해주세요.");
                 return;
@@ -1192,8 +1196,7 @@ public class SubMain {
             break;
         }
 
-        // Step 4: 출석 기록
-        System.out.println("Step 4: 출석을 기록합니다.");
+        // Step 6: 출석 완료
         String attendanceId = "att-" + String.format("%03d", attendances.size() + 1);
         Attendance attendance = new Attendance(attendanceId, currentMember.getMemberId(),
                 LocalDateTime.now(), "QR");
