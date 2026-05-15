@@ -2077,7 +2077,129 @@ public class SubMain {
         return productId;
     }
 
-    private void handleViewPointHistory() {}        // UC19
+    private void handleViewPointHistory() {
+        // Step 2~3: 포인트 정보 조회 (E1)
+        System.out.println("Step 2: 포인트 정보를 조회합니다.");
+        Point memberPoint = null;
+        for (Point p : points) {
+            if (p.getMemberId().equals(currentMember.getMemberId())) {
+                memberPoint = p;
+                break;
+            }
+        }
+
+        if (memberPoint == null || memberPoint.getBalance() == 0) {
+            System.out.println("현재 보유한 포인트가 없습니다.");
+            System.out.println("[포인트 적립 방법] 운동 기록 저장 시 자동 지급 (기본 10점 + 30분 이상 시 5점 추가)");
+            return;
+        }
+
+        System.out.println("Step 3: 포인트 잔액과 유효기간 정보를 출력합니다.");
+        System.out.println("─────────────────────────────────");
+        System.out.printf("현재 포인트 잔액: %,d점%n", memberPoint.getBalance());
+        System.out.println("유효기간        : " + memberPoint.getExpiryDate() + "까지");
+        System.out.println("─────────────────────────────────");
+
+        // Step 4: 포인트 내역 목록 (최신순, E2)
+        List<PointHistory> myHistory = new ArrayList<>();
+        for (PointHistory ph : pointHistories) {
+            if (ph.getMemberId().equals(currentMember.getMemberId())) {
+                myHistory.add(ph);
+            }
+        }
+        myHistory.sort((a, b) -> b.getDate().compareTo(a.getDate()));
+
+        LocalDate filterFrom = null;
+
+        while (true) {
+            // A2: 기간 필터 적용
+            List<PointHistory> displayList = new ArrayList<>();
+            for (PointHistory ph : myHistory) {
+                if (filterFrom == null || !ph.getDate().isBefore(filterFrom)) {
+                    displayList.add(ph);
+                }
+            }
+
+            System.out.println("Step 4: 포인트 적립/사용 내역을 출력합니다.");
+            if (filterFrom != null) System.out.println("[필터] " + filterFrom + " 이후 내역");
+            System.out.println("─────────────────────────────────");
+            System.out.printf("%-4s  %-10s  %-8s  %-14s  %6s  %s%n",
+                    "No.", "날짜", "구분", "사유", "변동", "잔여");
+            if (displayList.isEmpty()) {
+                System.out.println("해당 기간의 포인트 내역이 없습니다.");
+            } else {
+                for (int i = 0; i < displayList.size(); i++) {
+                    PointHistory ph = displayList.get(i);
+                    String sign = ph.getAmount() >= 0 ? "+" : "";
+                    System.out.printf("%-4d  %-10s  %-8s  %-14s  %s%d점  %d점%n",
+                            i + 1, ph.getDate(), ph.getType(),
+                            ph.getReason().length() > 14 ? ph.getReason().substring(0, 13) + "…" : ph.getReason(),
+                            sign, ph.getAmount(), ph.getBalanceAfter());
+                }
+            }
+            System.out.println("─────────────────────────────────");
+
+            System.out.println("F. 기간 필터   번호: 상세 조회   0. 돌아가기");
+            System.out.print("> ");
+            String input = scanner.nextLine().trim();
+            if (input.equals("0")) break;
+
+            // A2: 기간 필터 설정
+            if (input.equalsIgnoreCase("F")) {
+                System.out.println("Step 6: 조회 기간을 선택합니다.");
+                System.out.println("1. 1개월   2. 3개월   3. 6개월   4. 직접 입력   0. 필터 해제");
+                System.out.print("> ");
+                String filterInput = scanner.nextLine().trim();
+                switch (filterInput) {
+                    case "1" -> filterFrom = LocalDate.now().minusMonths(1);
+                    case "2" -> filterFrom = LocalDate.now().minusMonths(3);
+                    case "3" -> filterFrom = LocalDate.now().minusMonths(6);
+                    case "4" -> {
+                        LocalDate parsed = null;
+                        while (parsed == null) {
+                            System.out.print("시작일 (yyyy-MM-dd): ");
+                            try { parsed = LocalDate.parse(scanner.nextLine().trim()); }
+                            catch (Exception e) { System.out.println("올바른 날짜 형식을 입력해주세요."); }
+                        }
+                        filterFrom = parsed;
+                    }
+                    case "0" -> filterFrom = null;
+                    default  -> System.out.println("올바른 번호를 입력해주세요.");
+                }
+                continue;
+            }
+
+            // 상세 조회 (Step 8~9)
+            try {
+                int idx = Integer.parseInt(input) - 1;
+                if (idx < 0 || idx >= displayList.size()) {
+                    System.out.println("올바른 번호를 입력해주세요.");
+                    continue;
+                }
+                PointHistory selected = displayList.get(idx);
+                System.out.println("Step 9: 포인트 내역 상세 정보를 출력합니다.");
+                System.out.println("─────────────────────────────────");
+                System.out.println("날짜     : " + selected.getDate());
+                System.out.println("구분     : " + selected.getType());
+                System.out.println("상세 사유: " + selected.getReason());
+                System.out.println("변동 포인트: " + (selected.getAmount() >= 0 ? "+" : "") + selected.getAmount() + "점");
+                System.out.println("잔여 포인트: " + selected.getBalanceAfter() + "점");
+                System.out.println("─────────────────────────────────");
+            } catch (NumberFormatException e) {
+                System.out.println("올바른 번호를 입력해주세요.");
+            }
+        }
+
+        // Step 10: 포인트 소멸 예정 안내
+        if (memberPoint != null) {
+            long daysToExpiry = java.time.temporal.ChronoUnit.DAYS.between(
+                    LocalDate.now(), memberPoint.getExpiryDate());
+            if (daysToExpiry <= 30 && daysToExpiry >= 0) {
+                System.out.printf("%d일 후 %,d포인트가 소멸 예정입니다.%n",
+                        daysToExpiry, memberPoint.getBalance());
+            }
+        }
+    }
 
     private void handleSchedulePT() {}              // UC20
 
