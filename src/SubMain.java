@@ -1695,7 +1695,128 @@ public class SubMain {
         }
     }
 
-    private void handleUpdateMyInfo() {}    // UC15
+    private void handleUpdateMyInfo() {
+        // Step 2: 수정 폼 출력
+        System.out.println("Step 2: 내정보 수정 폼을 출력합니다.");
+        System.out.println("(생략 시 Enter → 현재 값 유지)");
+        System.out.println("─────────────────────────────────");
+
+        // 닉네임
+        System.out.println("현재 닉네임: " + currentMember.getNickname());
+        System.out.print("새 닉네임: ");
+        String newNickname = scanner.nextLine().trim();
+
+        // 전화번호 (A2: 형식 검증 및 중복 확인)
+        System.out.println("현재 전화번호: " + currentMember.getPhoneNumber());
+        String newPhone = "";
+        while (true) {
+            System.out.print("새 전화번호 (예: 010-1234-5678): ");
+            newPhone = scanner.nextLine().trim();
+            if (newPhone.isEmpty()) break;
+
+            // A2: 형식 검증
+            if (!newPhone.matches("\\d{3}-\\d{4}-\\d{4}")) {
+                System.out.println("올바른 형식의 전화번호를 입력해주세요.");
+                continue;
+            }
+            // A2: 중복 확인
+            boolean duplicate = false;
+            for (Member m : members) {
+                if (!m.getMemberId().equals(currentMember.getMemberId())
+                        && m.getPhoneNumber().equals(newPhone)) {
+                    duplicate = true;
+                    break;
+                }
+            }
+            if (duplicate) {
+                System.out.println("이미 사용 중인 전화번호입니다.");
+                continue;
+            }
+            break;
+        }
+
+        // 생년월일
+        System.out.println("현재 생년월일: " + currentMember.getBirthDate());
+        System.out.print("새 생년월일 (예: 19900101): ");
+        String newBirthDate = scanner.nextLine().trim();
+
+        // 신체정보
+        System.out.println("현재 신체정보: " + currentMember.getPhysicalInfo());
+        System.out.print("새 신체정보 (예: 175cm/70kg): ");
+        String newPhysicalInfo = scanner.nextLine().trim();
+
+        // 주소
+        System.out.println("현재 주소: " + currentMember.getAddress());
+        System.out.print("새 주소: ");
+        String newAddress = scanner.nextLine().trim();
+
+        // 프로필 사진 (A1)
+        System.out.println("현재 프로필 사진: " + currentMember.getProfilePicture());
+        System.out.println("프로필 사진을 변경하시겠습니까? (Y/N)");
+        System.out.print("> ");
+        String newProfilePicture = "";
+        if (scanner.nextLine().trim().equalsIgnoreCase("Y")) {
+            System.out.println("1. 갤러리에서 선택   2. 카메라 촬영");
+            System.out.print("> ");
+            scanner.nextLine();
+            System.out.print("파일명 입력: ");
+            newProfilePicture = scanner.nextLine().trim();
+            if (newProfilePicture.isEmpty()) {
+                System.out.println("프로필 사진 업로드에 실패하였습니다. 파일 크기 또는 형식을 확인해주세요.");
+                newProfilePicture = "";
+            } else {
+                System.out.println("[미리보기] " + newProfilePicture);
+            }
+        }
+
+        // 비밀번호 변경 (A3, E1)
+        System.out.println("비밀번호를 변경하시겠습니까? (Y/N)");
+        System.out.print("> ");
+        String newPassword = "";
+        if (scanner.nextLine().trim().equalsIgnoreCase("Y")) {
+            // Step 5~6: 현재 비밀번호 확인 (E1)
+            System.out.println("Step 5: 현재 비밀번호를 입력하여 본인 확인을 진행합니다.");
+            System.out.print("현재 비밀번호: ");
+            String currentPw = scanner.nextLine().trim();
+            if (!currentPw.equals(currentMember.getPassword())) {
+                System.out.println("현재 비밀번호가 올바르지 않습니다.");
+                return;
+            }
+            System.out.print("새 비밀번호: ");
+            newPassword = scanner.nextLine().trim();
+        }
+
+        // Step 7: 최종 확인
+        System.out.println("Step 7: 수정 내용을 최종 확인합니다.");
+        System.out.println("─────────────────────────────────");
+        if (!newNickname.isEmpty())     System.out.println("닉네임   : " + newNickname);
+        if (!newPhone.isEmpty())        System.out.println("전화번호 : " + newPhone);
+        if (!newBirthDate.isEmpty())    System.out.println("생년월일 : " + newBirthDate);
+        if (!newPhysicalInfo.isEmpty()) System.out.println("신체정보 : " + newPhysicalInfo);
+        if (!newAddress.isEmpty())      System.out.println("주소     : " + newAddress);
+        if (!newProfilePicture.isEmpty()) System.out.println("프로필   : " + newProfilePicture);
+        if (!newPassword.isEmpty())     System.out.println("비밀번호 : (변경됨)");
+        System.out.println("─────────────────────────────────");
+        System.out.println("저장하시겠습니까? (Y/N)");
+        System.out.print("> ");
+        if (!scanner.nextLine().trim().equalsIgnoreCase("Y")) return;
+
+        // Step 8: 저장 (E2)
+        System.out.println("Step 8: 수정된 정보를 저장합니다.");
+        if (!currentMember.init()) {
+            System.out.println("정보 저장에 실패하였습니다. 잠시 후 다시 시도해주세요.");
+            return;
+        }
+        if (!newNickname.isEmpty())     currentMember.setNickname(newNickname);
+        if (!newPhone.isEmpty())        currentMember.setPhoneNumber(newPhone);
+        if (!newBirthDate.isEmpty())    currentMember.setBirthDate(newBirthDate);
+        if (!newPhysicalInfo.isEmpty()) currentMember.setPhysicalInfo(newPhysicalInfo);
+        if (!newAddress.isEmpty())      currentMember.setAddress(newAddress);
+        if (!newProfilePicture.isEmpty()) currentMember.setProfilePicture(newProfilePicture);
+        if (!newPassword.isEmpty())     currentMember.setPassword(newPassword);
+
+        System.out.println("내정보가 성공적으로 수정되었습니다.");
+    }
 
     private void handleManageMembership() {}        // UC16
 
