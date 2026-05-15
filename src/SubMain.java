@@ -1818,9 +1818,148 @@ public class SubMain {
         System.out.println("내정보가 성공적으로 수정되었습니다.");
     }
 
-    private void handleManageMembership() {}        // UC16
+    private void handleManageMembership() {
+        // Step 2: 회원권 관리 화면
+        System.out.println("Step 2: 회원권 관리 화면을 출력합니다.");
 
-    private void handleCheckRemainingPeriod() {}    // UC17
+        // Step 3: UC17 잔여기간 조회 실행 (E1)
+        System.out.println("Step 3: 잔여기간 조회 유스케이스(UC17)를 실행합니다.");
+        Membership active = findActiveMembership();
+
+        // A1: 보유 회원권 없음
+        if (active == null) {
+            System.out.println("현재 보유 중인 회원권이 없습니다.");
+            System.out.println("[회원권 구매하기] 1. 구매   0. 돌아가기");
+            System.out.print("> ");
+            if (scanner.nextLine().trim().equals("1")) {
+                handlePurchaseMembership();
+            }
+            return;
+        }
+
+        showRemainingPeriod(active);
+
+        // Step 5: 부가 상품 현황
+        System.out.println("Step 5: 부가 상품 보유 현황을 출력합니다.");
+        System.out.println("─────────────────────────────────");
+        System.out.println("[부가 상품 현황]");
+        long lockerCount = orders.stream()
+                .filter(o -> o.getMemberId().equals(currentMember.getMemberId())
+                        && "ADDITIONAL_PRODUCT".equals(getProductTypeById(o.getProductId())))
+                .count();
+        int ptRemaining = memberPTs.stream()
+                .filter(pt -> pt.getMemberId().equals(currentMember.getMemberId())
+                        && "ACTIVE".equals(pt.getStatus()))
+                .mapToInt(PT::getRemainingCount).sum();
+        System.out.println("부가 상품 구매 수: " + lockerCount + "건");
+        System.out.println("PT 잔여 횟수    : " + ptRemaining + "회");
+
+        // Step 7~9: 이용 내역 (E2)
+        System.out.println("─────────────────────────────────");
+        System.out.println("[이용 내역 (출석 기록)]");
+        List<Attendance> myAttendances = new ArrayList<>();
+        for (Attendance a : attendances) {
+            if (a.getMemberId().equals(currentMember.getMemberId())) myAttendances.add(a);
+        }
+        if (myAttendances.isEmpty()) {
+            System.out.println("이용 내역이 없습니다.");
+        } else {
+            for (Attendance a : myAttendances) {
+                System.out.println("- " + a.getAttendanceDateTime().toLocalDate()
+                        + "  " + a.getAttendanceDateTime().toLocalTime()
+                        + "  (" + a.getAuthMethod() + ")");
+            }
+        }
+
+        // Step 10: 만료 임박 경고 (7일 이하)
+        long remaining = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), active.getEndDate());
+        if (remaining <= 7 && remaining >= 0) {
+            System.out.println("─────────────────────────────────");
+            System.out.println("[안내] 회원권이 " + remaining + "일 후 만료됩니다. 갱신을 권장합니다.");
+        }
+
+        System.out.println("─────────────────────────────────");
+        System.out.println("1. 부가 상품 관리   0. 돌아가기");
+        System.out.print("> ");
+        String input = scanner.nextLine().trim();
+
+        // A2: 부가 상품 관리 → UC18
+        if (input.equals("1")) {
+            handleManageAdditionalProduct();
+        }
+    }
+
+    private Membership findActiveMembership() {
+        for (Membership ms : memberMemberships) {
+            if (ms.getMemberId().equals(currentMember.getMemberId())
+                    && "ACTIVE".equals(ms.getStatus())) {
+                return ms;
+            }
+        }
+        return null;
+    }
+
+    private String getProductTypeById(String productId) {
+        for (AdditionalProduct ap : additionalProductCatalog) {
+            if (ap.getProductId().equals(productId)) return "ADDITIONAL_PRODUCT";
+        }
+        return "";
+    }
+
+    private void showRemainingPeriod(Membership ms) {
+        System.out.println("─────────────────────────────────");
+        System.out.println("[회원권 잔여기간]");
+        System.out.println("종류   : " + ms.getProductName());
+        System.out.println("시작일 : " + ms.getStartDate());
+        System.out.println("만료일 : " + ms.getEndDate());
+
+        // A1: 일시정지 상태
+        if (ms.getPauseDate() != null) {
+            System.out.println("상태   : 일시정지");
+            System.out.println("정지일 : " + ms.getPauseDate());
+            if (ms.getResumeDate() != null) System.out.println("재개일 : " + ms.getResumeDate());
+        } else {
+            long remaining = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), ms.getEndDate());
+            if (remaining < 0) {
+                System.out.println("상태   : 만료됨");
+            } else {
+                System.out.println("잔여일 : " + remaining + "일");
+            }
+        }
+        System.out.println("─────────────────────────────────");
+    }
+
+    private void handleCheckRemainingPeriod() {
+        System.out.println("Step 2: 회원권 정보를 조회합니다.");
+        Membership active = findActiveMembership();
+
+        // A2: 만료 또는 보유 없음
+        if (active == null) {
+            System.out.println("회원권이 만료되었습니다.");
+            System.out.println("[회원권 구매하기] 1. 구매   0. 돌아가기");
+            System.out.print("> ");
+            if (scanner.nextLine().trim().equals("1")) handlePurchaseMembership();
+            return;
+        }
+
+        showRemainingPeriod(active);
+
+        // Step 6: 만료 임박 경고
+        long remaining = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), active.getEndDate());
+        if (remaining <= 7 && remaining >= 0) {
+            System.out.println("[안내] 회원권이 " + remaining + "일 후 만료됩니다. 갱신을 권장합니다.");
+        }
+
+        // Step 7~9: 상세 정보 조회
+        System.out.println("상세 정보를 보시겠습니까? (Y/N)");
+        System.out.print("> ");
+        if (scanner.nextLine().trim().equalsIgnoreCase("Y")) {
+            System.out.println("─────────────────────────────────");
+            System.out.println("설명     : " + active.getDescription());
+            System.out.println("구매 상품: " + active.getProductName());
+            System.out.println("─────────────────────────────────");
+        }
+    }
 
     private void handleManageAdditionalProduct() {} // UC18
 
