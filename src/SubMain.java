@@ -1404,9 +1404,121 @@ public class SubMain {
         System.out.printf("현재 포인트 잔액: %,d점%n", balance);
     }
 
-    private void handleSearchEquipment() {} // UC11
+    private void handleSearchEquipment() {
+        // Step 2: 기구 전체 리스트 출력
+        System.out.println("Step 2: 기구 전체 목록을 출력합니다.");
+        List<Equipment> displayList = new ArrayList<>(equipments);
+        printEquipmentList(displayList);
+        System.out.println("F. 검색/카테고리 필터   0. 돌아가기");
 
-    private void handleViewExerciseMethod() {}  // UC12
+        while (true) {
+            System.out.print("> ");
+            String input = scanner.nextLine().trim();
+            if (input.equals("0")) return;
+
+            // A1: 기구 검색 또는 카테고리 필터
+            if (input.equalsIgnoreCase("F")) {
+                System.out.print("기구명 또는 카테고리(유산소/근력/스트레칭) 입력: ");
+                String keyword = scanner.nextLine().trim();
+                displayList = new ArrayList<>();
+                for (Equipment eq : equipments) {
+                    if (eq.getName().contains(keyword) || eq.getCategory().contains(keyword))
+                        displayList.add(eq);
+                }
+                if (displayList.isEmpty()) {
+                    System.out.println("검색 결과가 없습니다. 전체 목록을 표시합니다.");
+                    displayList = new ArrayList<>(equipments);
+                }
+                printEquipmentList(displayList);
+                System.out.println("F. 검색/카테고리 필터   0. 돌아가기");
+                continue;
+            }
+
+            try {
+                int idx = Integer.parseInt(input) - 1;
+                if (idx < 0 || idx >= displayList.size()) {
+                    System.out.println("올바른 번호를 입력해주세요.");
+                    continue;
+                }
+                Equipment selected = displayList.get(idx);
+
+                // Step 4: 기구 상세 정보 출력 (E1)
+                System.out.println("Step 4: 선택한 기구의 상세 정보를 출력합니다.");
+                if (!selected.init()) {
+                    System.out.println("기구 상세 정보를 불러오는 데 실패하였습니다. 잠시 후 다시 시도해주세요.");
+                    return;
+                }
+                System.out.println("─────────────────────────────────");
+                System.out.println("기구명   : " + selected.getName());
+                System.out.println("카테고리 : " + selected.getCategory());
+                System.out.println("설명     : " + selected.getDescription());
+                System.out.println("상태     : " + selected.getStatus());
+
+                // Step 6: 운동 방법 목록 출력
+                System.out.println("─────────────────────────────────");
+                List<ExerciseMethod> methods = selected.getExerciseMethods();
+                if (methods.isEmpty()) {
+                    System.out.println("등록된 운동 방법이 없습니다.");
+                } else {
+                    System.out.println("[운동 방법 목록]");
+                    for (int i = 0; i < methods.size(); i++) {
+                        System.out.printf("%d. %s (%s)%n",
+                                i + 1, methods.get(i).getExerciseName(), methods.get(i).getDifficulty());
+                    }
+                    // A2: 운동방법 조회 선택 → UC12 실행
+                    System.out.println("번호 입력: 운동방법 상세 조회   0. 돌아가기");
+                    System.out.print("> ");
+                    String methodInput = scanner.nextLine().trim();
+                    if (!methodInput.equals("0")) {
+                        try {
+                            int midx = Integer.parseInt(methodInput) - 1;
+                            if (midx >= 0 && midx < methods.size()) {
+                                showExerciseMethodDetail(methods.get(midx));
+                            } else {
+                                System.out.println("올바른 번호를 입력해주세요.");
+                            }
+                        } catch (NumberFormatException e) {
+                            System.out.println("올바른 번호를 입력해주세요.");
+                        }
+                    }
+                }
+                return;
+            } catch (NumberFormatException e) {
+                System.out.println("올바른 번호를 입력해주세요.");
+            }
+        }
+    }
+
+    private void printEquipmentList(List<Equipment> list) {
+        for (int i = 0; i < list.size(); i++) {
+            Equipment eq = list.get(i);
+            System.out.printf("%d. [%s] %-10s - %s%n",
+                    i + 1, eq.getCategory(), eq.getName(), eq.getStatus());
+        }
+    }
+
+    private void handleViewExerciseMethod() {  // UC12 진입점 (UC11 흐름 재사용)
+        handleSearchEquipment();
+    }
+
+    private void showExerciseMethodDetail(ExerciseMethod method) {
+        System.out.println("Step 1: 운동 방법 상세 정보를 출력합니다.");
+        if (!method.init()) {
+            System.out.println("운동방법 정보를 불러오는 데 실패하였습니다. 잠시 후 다시 시도해주세요.");
+            return;
+        }
+        System.out.println("─────────────────────────────────");
+        System.out.println("운동명    : " + method.getExerciseName());
+        System.out.println("대상 부위 : " + method.getTargetBodyPart());
+        System.out.println("난이도    : " + method.getDifficulty());
+        System.out.println("준비 자세 : " + method.getPreparationPose());
+        System.out.println("[단계별 운동 방법]");
+        System.out.println(method.getStepByStepMethod());
+        System.out.println("─────────────────────────────────");
+        System.out.println("참고 이미지: " + method.getImage());
+        System.out.println("영상 URL   : " + method.getVideoUrl());
+        System.out.println("─────────────────────────────────");
+    }
 
     private void handleViewNotice() {}      // UC13
 
