@@ -1,3 +1,5 @@
+package com.fitcoach.client.model.order;
+
 import java.time.LocalDateTime;
 
 public class Payment {

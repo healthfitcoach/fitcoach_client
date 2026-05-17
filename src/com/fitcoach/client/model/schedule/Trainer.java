@@ -1,3 +1,5 @@
+package com.fitcoach.client.model.schedule;
+
 public class Trainer {
 
     private String trainerId;

@@ -1,3 +1,5 @@
+package com.fitcoach.client.model.equipment;
+
 import java.util.ArrayList;
 import java.util.List;
 

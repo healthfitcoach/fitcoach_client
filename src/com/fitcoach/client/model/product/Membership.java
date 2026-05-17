@@ -1,3 +1,5 @@
+package com.fitcoach.client.model.product;
+
 import java.time.LocalDate;
 
 public class Membership extends Product {

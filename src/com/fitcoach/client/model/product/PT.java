@@ -1,3 +1,6 @@
+package com.fitcoach.client.model.product;
+
+import com.fitcoach.client.model.schedule.PTSchedule;
 import java.util.ArrayList;
 import java.util.List;
 

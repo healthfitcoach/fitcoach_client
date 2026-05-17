@@ -1,3 +1,5 @@
+package com.fitcoach.client.model.equipment;
+
 public class ExerciseMethod {
 
     private String methodId;

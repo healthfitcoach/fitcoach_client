@@ -1,3 +1,5 @@
+package com.fitcoach.client.model.point;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;

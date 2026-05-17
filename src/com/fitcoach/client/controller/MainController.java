@@ -1,11 +1,21 @@
+package com.fitcoach.client.controller;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import com.fitcoach.client.model.member.*;
+import com.fitcoach.client.model.product.*;
+import com.fitcoach.client.model.schedule.*;
+import com.fitcoach.client.model.order.*;
+import com.fitcoach.client.model.point.*;
+import com.fitcoach.client.model.equipment.*;
+import com.fitcoach.client.model.notice.*;
 
-public class SubMain {
+
+public class MainController {
 
     private Scanner scanner;
     private Member currentMember;
@@ -35,7 +45,7 @@ public class SubMain {
     private List<Point> points;
     private List<PointHistory> pointHistories;
 
-    public SubMain() {
+    public MainController() {
         this.scanner = null;
         this.currentMember = null;
         this.membershipCatalog = new ArrayList<>();
