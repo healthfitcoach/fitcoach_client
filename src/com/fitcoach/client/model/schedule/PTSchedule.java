@@ -1,3 +1,5 @@
+package com.fitcoach.client.model.schedule;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 

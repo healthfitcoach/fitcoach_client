@@ -1,3 +1,5 @@
+package com.fitcoach.client.model.product;
+
 public class SportEquipment extends Product {
 
     private int stock;

@@ -1,3 +1,5 @@
+package com.fitcoach.client.model.point;
+
 public class PointPolicy {
 
     private String policyId;

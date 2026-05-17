@@ -1,3 +1,5 @@
+package com.fitcoach.client.model.product;
+
 public class AdditionalProduct extends Product {
 
     private String additionalProductId;

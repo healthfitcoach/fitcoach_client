@@ -1,3 +1,5 @@
+package com.fitcoach.client.model.product;
+
 public abstract class Product {
 
     private String productId;

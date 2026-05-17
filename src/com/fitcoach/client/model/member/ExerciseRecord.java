@@ -1,3 +1,5 @@
+package com.fitcoach.client.model.member;
+
 import java.time.LocalDate;
 
 public class ExerciseRecord {
