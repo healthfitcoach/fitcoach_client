@@ -247,6 +247,7 @@ public class PurchaseController {
   public List<AdditionalProduct> getAdditionalProductCatalog() { return additionalProductCatalog; }
   public List<Membership> getMemberMemberships() { return memberMemberships; }
   public List<Order> getOrders() { return orders; }
+  public List<Payment> getPayments() { return payments; }
   public List<PT> getMemberPTs() { return memberPTs; }
   public List<PTSchedule> getPtSchedules() { return ptSchedules; }
   public List<Trainer> getTrainers() { return trainers; }
