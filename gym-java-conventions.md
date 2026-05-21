@@ -24,15 +24,15 @@
 ```java
 // ✅ 올바른 예
 if (condition) {
-  doSomething();
+doSomething();
 } else {
-  doOther();
+doOther();
 }
 
 // ❌ 잘못된 예 (새 줄에 여는 중괄호)
-if (condition)
-{
-  doSomething();
+        if (condition)
+        {
+doSomething();
 }
 ```
 
@@ -55,41 +55,27 @@ if (condition)
 
 ### 프로젝트 클래스명 영문 변환 (필수 준수)
 
-| 한글 | 영문 클래스명 |
-|------|--------------|
-| 회원 | Member |
-| 회원권 | Membership |
-| 회원권상품 | MembershipProduct |
-| PT | PT |
-| PT일정 | PTSchedule |
-| PT상품 | PTProduct |
-| 운동프로그램 | ExerciseProgram |
-| 운동용품 | SportEquipment |
-| 운동기록 | ExerciseRecord |
-| 운동방법 | ExerciseMethod |
-| 트레이너 | Trainer |
-| 직원 | Employee |
-| 기구 | Apparatus |
-| 기구점검이력 | ApparatusInspectionHistory |
-| 비품 | Supply |
-| 업체 | Vendor |
-| 계약 | Contract |
-| 공지사항 | Notice |
-| 출석 | Attendance |
-| 결제 | Payment |
-| 포인트 | Point |
-| 포인트정책 | PointPolicy |
-| 포인트내역 | PointHistory |
-| 주문 | Order |
-| 부가상품 | AdditionalProduct |
-| 외부강사 | ExternalInstructor |
-| 이벤트 | Event |
-| 알림메시지 | Notification |
-| 재정내역 | FinancialRecord |
-| 급여 | Salary |
-| 프로그램예약 | ProgramReservation |
-| 기구(고객용) | Equipment |
-| 상품(슈퍼) | Product |
+| 한글 | 영문 클래스명 | 비고 |
+|------|--------------|------|
+| 상품 | Product | abstract 슈퍼 클래스 |
+| 회원권 | Membership | extends Product |
+| 부가상품 | AdditionalProduct | extends Product |
+| 운동프로그램 | ExerciseProgram | extends Product |
+| 운동용품 | SportEquipment | extends Product |
+| PT이용권 | PT | extends Product |
+| 회원 | Member | |
+| 트레이너 | Trainer | |
+| PT일정 | PTSchedule | |
+| 주문 | Order | |
+| 결제 | Payment | |
+| 포인트 | Point | |
+| 포인트정책 | PointPolicy | |
+| 포인트내역 | PointHistory | |
+| 출석 | Attendance | |
+| 운동기록 | ExerciseRecord | |
+| 공지사항 | Notice | |
+| 기구 | Equipment | Member와 독립 |
+| 운동방법 | ExerciseMethod | |
 
 ---
 
@@ -115,7 +101,7 @@ public class Member {
 
   // [3] public 메서드
   public Member register(String name, String nickname, String loginId,
-      String password, String phone) {
+                         String password, String phone) {
     // ...
     return this;
   }
