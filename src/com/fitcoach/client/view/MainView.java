@@ -20,6 +20,7 @@ import com.fitcoach.client.model.product.SportEquipment;
 import com.fitcoach.client.model.schedule.Trainer;
 import com.fitcoach.client.util.ConsoleUtil;
 import com.fitcoach.client.util.InputUtil;
+import db.DBA;
 
 public class MainView {
   private InputUtil iu;
@@ -32,6 +33,8 @@ public class MainView {
   private PurchaseController purchase;
   private MemberController member;
 
+  private DBA dba;
+
   private AuthView authView;
   private InfoView infoView;
   private PTView ptView;
@@ -42,9 +45,16 @@ public class MainView {
   public MainView() {
     this.iu = null;
     this.cu = null;
+    this.dba = null;
   }
 
   public boolean init() {
+    // Phase 0: DB 연결
+    dba = new DBA("localhost", 3306, "fitcoach", "fitcoach", "fitcoach1234");
+    if (!dba.init()) {
+      System.out.println("[경고] DB 연결에 실패했습니다. In-Memory 모드로 실행합니다.");
+    }
+
     // Phase 1: 유틸 초기화
     iu = new InputUtil();
     if (!iu.init()) {
@@ -258,8 +268,13 @@ public class MainView {
     }
   }
 
+  public DBA getDba() {
+    return dba;
+  }
+
   private void exitProgram() {
     System.out.println("FitCoach 시스템을 종료합니다. 이용해 주셔서 감사합니다.");
+    if (dba != null) dba.disconnect();
     iu.close();
     System.exit(0);
   }
