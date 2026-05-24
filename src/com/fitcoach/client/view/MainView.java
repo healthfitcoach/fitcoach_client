@@ -1,41 +1,17 @@
 package com.fitcoach.client.view;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 import com.fitcoach.client.controller.ActivityController;
 import com.fitcoach.client.controller.AuthController;
 import com.fitcoach.client.controller.InfoController;
 import com.fitcoach.client.controller.MemberController;
 import com.fitcoach.client.controller.PTController;
 import com.fitcoach.client.controller.PurchaseController;
-import com.fitcoach.client.model.equipment.Equipment;
-import com.fitcoach.client.model.equipment.ExerciseMethod;
-import com.fitcoach.client.model.point.PointPolicy;
-import com.fitcoach.client.model.product.AdditionalProduct;
-import com.fitcoach.client.model.product.Membership;
-import com.fitcoach.client.model.product.PT;
 import com.fitcoach.client.util.ConsoleUtil;
 import com.fitcoach.client.util.InputUtil;
 import db.DBA;
-import db.dao.AdditionalProductDao;
-import db.dao.AttendanceDao;
-import db.dao.EquipmentDao;
-import db.dao.ExerciseMethodDao;
-import db.dao.ExerciseProgramDao;
-import db.dao.ExerciseRecordDao;
-import db.dao.MemberDao;
-import db.dao.MembershipDao;
-import db.dao.NoticeDao;
-import db.dao.OrderDao;
-import db.dao.PaymentDao;
-import db.dao.PTDao;
-import db.dao.PTScheduleDao;
-import db.dao.PointDao;
-import db.dao.PointHistoryDao;
-import db.dao.PointPolicyDao;
-import db.dao.SportEquipmentDao;
-import db.dao.TrainerDao;
 
 public class MainView {
   private InputUtil iu;
@@ -65,9 +41,10 @@ public class MainView {
 
   public boolean init() {
     // Phase 0: DB 연결
-    dba = new DBA("localhost", 3306, "fitcoach", "fitcoach", "fitcoach1234");
-    if (!dba.init()) {
-      System.out.println("[경고] DB 연결에 실패했습니다. In-Memory 모드로 실행합니다.");
+    dba = createDBA();
+    if (dba == null || !dba.init()) {
+      System.out.println("[경고] DB 연결에 실패했습니다.");
+      return false;
     }
 
     // Phase 1: 유틸 초기화
@@ -78,31 +55,22 @@ public class MainView {
     }
     cu = new ConsoleUtil();
 
-    // Phase 2: 컨트롤러 생성
-    auth     = new AuthController();
-    info     = new InfoController();
-    pt       = new PTController();
-    purchase = new PurchaseController();
-    activity = new ActivityController();
+    // Phase 2: 컨트롤러 생성 (각자 DAO를 통해 DB에 직접 접근)
+    auth     = new AuthController(dba);
+    info     = new InfoController(dba);
+    pt       = new PTController(dba);
+    activity = new ActivityController(dba);
+    purchase = new PurchaseController(dba);
+    member   = new MemberController(dba, purchase, activity, pt);
 
-    // Phase 3: 크로스 레퍼런스 주입
-    activity.setMemberMemberships(purchase.getMemberMemberships());
-    purchase.setPointLists(activity.getPoints(), activity.getPointHistories());
-    purchase.setPTData(pt.getTrainers(), pt.getMemberPTs(), pt.getPtSchedules());
-
-    member = new MemberController(auth, purchase, activity, pt);
-
-    // Phase 4: DB에서 데이터 로드
-    if (dba != null && dba.isConnected()) loadFromDatabase();
-
-    // Phase 5: 컨트롤러 초기화 (의존성 검증)
+    // Phase 3: 컨트롤러 초기화 검증
     if (!auth.init() || !info.init() || !pt.init()
         || !activity.init() || !purchase.init() || !member.init()) {
       System.out.println("서비스 초기화에 실패했습니다. 잠시 후 다시 시도해주세요.");
       return false;
     }
 
-    // Phase 6: 뷰 생성
+    // Phase 4: 뷰 생성
     authView     = new AuthView(iu, cu, auth);
     infoView     = new InfoView(iu, cu, auth, info);
     ptView       = new PTView(iu, cu, auth, pt);
@@ -113,92 +81,24 @@ public class MainView {
     return true;
   }
 
-  // ─── DB → In-Memory 로드 ─────────────────────────────────────
-
-  private void loadFromDatabase() {
-    // 회원
-    MemberDao memberDao = new MemberDao(dba);
-    if (memberDao.init()) auth.getMembers().addAll(memberDao.findAll());
-
-    // 기구 + 운동방법 (연결)
-    EquipmentDao equipmentDao   = new EquipmentDao(dba);
-    ExerciseMethodDao methodDao = new ExerciseMethodDao(dba);
-    if (equipmentDao.init() && methodDao.init()) {
-      List<Equipment> eqList = equipmentDao.findAll();
-      Map<String, Equipment> eqMap = new HashMap<>();
-      for (Equipment eq : eqList) eqMap.put(eq.getEquipmentId(), eq);
-      for (ExerciseMethod m : methodDao.findAll()) {
-        Equipment parent = eqMap.get(m.getEquipmentId());
-        if (parent != null) parent.addExerciseMethod(m);
+  private DBA createDBA() {
+    Properties props = new Properties();
+    try (InputStream is = getClass().getClassLoader().getResourceAsStream("db.properties")) {
+      if (is == null) {
+        System.out.println("db.properties 파일을 찾을 수 없습니다.");
+        return null;
       }
-      info.getEquipments().addAll(eqList);
+      props.load(is);
+      String host = props.getProperty("db.host");
+      int    port = Integer.parseInt(props.getProperty("db.port"));
+      String name = props.getProperty("db.name");
+      String user = props.getProperty("db.user");
+      String pass = props.getProperty("db.password");
+      return new DBA(host, port, name, user, pass);
+    } catch (IOException e) {
+      System.out.println("db.properties 읽기 실패: " + e.getMessage());
+      return null;
     }
-
-    // 공지사항
-    NoticeDao noticeDao = new NoticeDao(dba);
-    if (noticeDao.init()) info.getNotices().addAll(noticeDao.findAll());
-
-    // 트레이너
-    TrainerDao trainerDao = new TrainerDao(dba);
-    if (trainerDao.init()) pt.getTrainers().addAll(trainerDao.findAll());
-
-    // 포인트 정책
-    PointPolicyDao policyDao = new PointPolicyDao(dba);
-    if (policyDao.init()) {
-      PointPolicy policy = policyDao.findActive();
-      if (policy != null) activity.setPointPolicy(policy);
-    }
-
-    // 회원권: null memberId → 카탈로그, 그 외 → 구매 목록
-    MembershipDao membershipDao = new MembershipDao(dba);
-    if (membershipDao.init()) {
-      for (Membership ms : membershipDao.findAll()) {
-        if (ms.getMemberId() == null) purchase.getMembershipCatalog().add(ms);
-        else purchase.getMemberMemberships().add(ms);
-      }
-    }
-
-    // 헬스 프로그램 카탈로그
-    ExerciseProgramDao programDao = new ExerciseProgramDao(dba);
-    if (programDao.init()) purchase.getProgramCatalog().addAll(programDao.findAll());
-
-    // 운동용품 카탈로그
-    SportEquipmentDao seDao = new SportEquipmentDao(dba);
-    if (seDao.init()) purchase.getSportEquipmentCatalog().addAll(seDao.findAll());
-
-    // PT: null memberId → 카탈로그, 그 외 → 구매 목록
-    PTDao ptDao = new PTDao(dba);
-    if (ptDao.init()) {
-      for (PT p : ptDao.findAll()) {
-        if (p.getMemberId() == null) purchase.getPtCatalog().add(p);
-        else pt.getMemberPTs().add(p);
-      }
-    }
-
-    // 부가 상품: null memberId → 카탈로그
-    AdditionalProductDao apDao = new AdditionalProductDao(dba);
-    if (apDao.init()) {
-      for (AdditionalProduct ap : apDao.findAll()) {
-        if (ap.getMemberId() == null) purchase.getAdditionalProductCatalog().add(ap);
-      }
-    }
-
-    // 트랜잭션 데이터
-    AttendanceDao attendanceDao     = new AttendanceDao(dba);
-    ExerciseRecordDao recordDao     = new ExerciseRecordDao(dba);
-    PointDao pointDao               = new PointDao(dba);
-    PointHistoryDao historyDao      = new PointHistoryDao(dba);
-    OrderDao orderDao               = new OrderDao(dba);
-    PaymentDao paymentDao           = new PaymentDao(dba);
-    PTScheduleDao scheduleDao       = new PTScheduleDao(dba);
-
-    if (attendanceDao.init()) activity.getAttendances().addAll(attendanceDao.findAll());
-    if (recordDao.init())     activity.getExerciseRecords().addAll(recordDao.findAll());
-    if (pointDao.init())      activity.getPoints().addAll(pointDao.findAll());
-    if (historyDao.init())    activity.getPointHistories().addAll(historyDao.findAll());
-    if (orderDao.init())      purchase.getOrders().addAll(orderDao.findAll());
-    if (paymentDao.init())    purchase.getPayments().addAll(paymentDao.findAll());
-    if (scheduleDao.init())   pt.getPtSchedules().addAll(scheduleDao.findAll());
   }
 
   // ─── 메인 루프 ────────────────────────────────────────────────

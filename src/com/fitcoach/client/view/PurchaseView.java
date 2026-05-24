@@ -385,7 +385,7 @@ public class PurchaseView {
     String memberId = auth.getCurrentMember().getMemberId();
 
     cu.showStep(1, "소속 트레이너 목록을 출력합니다.");
-    List<Trainer> displayTrainers = new ArrayList<>(purchase.getTrainers());
+    List<Trainer> displayTrainers = new ArrayList<>(purchase.getAllTrainersList());
     printTrainerList(displayTrainers);
     System.out.println("F. 전문 분야 필터   0. 돌아가기");
 
@@ -399,12 +399,12 @@ public class PurchaseView {
         System.out.print("전문 분야 키워드 입력 (예: 요가, 웨이트): ");
         String keyword = iu.readLine();
         List<Trainer> filtered = new ArrayList<>();
-        for (Trainer t : purchase.getTrainers()) {
+        for (Trainer t : purchase.getAllTrainersList()) {
           if (t.getSpecialty().contains(keyword)) filtered.add(t);
         }
         if (filtered.isEmpty()) {
           System.out.println("해당 조건의 트레이너가 없습니다. 전체 목록을 표시합니다.");
-          displayTrainers = new ArrayList<>(purchase.getTrainers());
+          displayTrainers = new ArrayList<>(purchase.getAllTrainersList());
         } else {
           displayTrainers = filtered;
         }

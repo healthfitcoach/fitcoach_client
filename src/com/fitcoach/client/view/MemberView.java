@@ -272,7 +272,7 @@ public class MemberView {
       cu.showStep(2, "현재 이용 중인 부가 상품 목록을 출력합니다.");
       cu.showSeparator();
       System.out.println("[보유 부가 상품]");
-      List<Order> myAdOrders = member.getAdditionalOrders(memberId);
+      List<Order> myAdOrders = member.getOrders(memberId);
       if (myAdOrders.isEmpty()) {
         System.out.println("이용 중인 부가 상품이 없습니다.");
       } else {

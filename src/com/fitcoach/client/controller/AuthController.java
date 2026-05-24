@@ -1,44 +1,41 @@
 package com.fitcoach.client.controller;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.UUID;
 import com.fitcoach.client.model.member.Member;
+import db.DBA;
+import db.dao.AuthDao;
 
 public class AuthController {
-  private List<Member> members;
+  private AuthDao dao;
   private Member currentMember;
 
-  public AuthController() {
-    this.members = new ArrayList<>();
+  public AuthController(DBA dba) {
+    this.dao = new AuthDao(dba);
     this.currentMember = null;
   }
 
   public boolean init() {
-    return true;
+    return dao.init();
   }
 
   public boolean isDuplicateLoginId(String loginId) {
-    return members.stream().anyMatch(m -> m.getLoginId().equals(loginId));
+    return dao.existsByLoginId(loginId);
   }
 
   public boolean createMember(String loginId, String password, String name,
       String nickname, String phoneNumber, String birthDate,
       String physicalInfo, String address, String profilePicture) {
-    String memberId = "member-" + String.format("%03d", members.size() + 1);
+    String memberId = "member-" + UUID.randomUUID().toString().substring(0, 8);
     Member newMember = new Member(memberId, loginId, password, name, nickname,
         phoneNumber, birthDate, physicalInfo, address, profilePicture, LocalDate.now());
     if (!newMember.init()) return false;
-    members.add(newMember);
-    return true;
+    return dao.save(newMember);
   }
 
   public Member validateLogin(String loginId, String password) {
-    for (Member m : members) {
-      if (m.getLoginId().equals(loginId) && m.getPassword().equals(password)) {
-        return m;
-      }
-    }
+    Member member = dao.findByLoginId(loginId);
+    if (member != null && member.getPassword().equals(password)) return member;
     return null;
   }
 
@@ -58,9 +55,5 @@ public class AuthController {
 
   public Member getCurrentMember() {
     return currentMember;
-  }
-
-  public List<Member> getMembers() {
-    return members;
   }
 }

@@ -35,4 +35,8 @@ build/
 .vscode/
 
 ### Mac OS ###
-.DS_Storeout/
+.DS_Store
+out/
+
+### DB 연결 정보 ###
+src/db.properties

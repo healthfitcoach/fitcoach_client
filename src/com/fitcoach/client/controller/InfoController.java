@@ -5,35 +5,30 @@ import java.util.List;
 import com.fitcoach.client.model.equipment.Equipment;
 import com.fitcoach.client.model.equipment.ExerciseMethod;
 import com.fitcoach.client.model.notice.Notice;
+import db.DBA;
+import db.dao.InfoDao;
 
 public class InfoController {
-  private List<Equipment> equipments;
-  private List<Notice> notices;
+  private InfoDao dao;
 
-  public InfoController() {
-    this.equipments = new ArrayList<>();
-    this.notices = new ArrayList<>();
+  public InfoController(DBA dba) {
+    this.dao = new InfoDao(dba);
   }
 
   public boolean init() {
-    return true;
+    return dao.init();
   }
 
-  public List<Equipment> getEquipments() { return equipments; }
-  public List<Notice> getNotices() { return notices; }
-
   public List<Equipment> getAllEquipments() {
-    return new ArrayList<>(equipments);
+    return dao.findAllEquipments();
   }
 
   public List<Equipment> searchEquipments(String keyword) {
-    List<Equipment> result = new ArrayList<>();
-    for (Equipment eq : equipments) {
-      if (eq.getName().contains(keyword) || eq.getCategory().contains(keyword)) {
-        result.add(eq);
-      }
-    }
-    return result;
+    return dao.searchEquipments(keyword);
+  }
+
+  public List<ExerciseMethod> getExerciseMethodsByEquipment(String equipmentId) {
+    return dao.findExerciseMethodsByEquipmentId(equipmentId);
   }
 
   public boolean initEquipmentDetail(Equipment equipment) {
@@ -41,7 +36,7 @@ public class InfoController {
   }
 
   public List<Notice> getAllNoticesSorted() {
-    List<Notice> sorted = new ArrayList<>(notices);
+    List<Notice> sorted = new ArrayList<>(dao.findAllNotices());
     sorted.sort((a, b) -> b.getWriteDate().compareTo(a.getWriteDate()));
     return sorted;
   }
@@ -52,6 +47,7 @@ public class InfoController {
 
   public void markNoticeAsRead(Notice notice, String memberId) {
     notice.markAsRead(memberId);
+    dao.updateNoticeReadStatus(notice.getNoticeId(), memberId);
   }
 
   public boolean initExerciseMethodDetail(ExerciseMethod method) {

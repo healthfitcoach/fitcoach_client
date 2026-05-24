@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import com.fitcoach.client.model.order.Order;
 import com.fitcoach.client.model.order.Payment;
 import com.fitcoach.client.model.point.Point;
@@ -16,63 +17,24 @@ import com.fitcoach.client.model.product.PT;
 import com.fitcoach.client.model.product.SportEquipment;
 import com.fitcoach.client.model.schedule.PTSchedule;
 import com.fitcoach.client.model.schedule.Trainer;
+import db.DBA;
+import db.dao.PurchaseDao;
 
 public class PurchaseController {
-  private List<Membership> membershipCatalog;
-  private List<ExerciseProgram> programCatalog;
-  private List<SportEquipment> sportEquipmentCatalog;
-  private List<PT> ptCatalog;
-  private List<AdditionalProduct> additionalProductCatalog;
-  private List<Membership> memberMemberships;
-  private List<Order> orders;
-  private List<Payment> payments;
+  private PurchaseDao dao;
 
-  // 크로스 레퍼런스 (setter 주입)
-  private List<Point> points;
-  private List<PointHistory> pointHistories;
-  private List<Trainer> trainers;
-  private List<PT> memberPTs;
-  private List<PTSchedule> ptSchedules;
-
-  public PurchaseController() {
-    this.membershipCatalog = new ArrayList<>();
-    this.programCatalog = new ArrayList<>();
-    this.sportEquipmentCatalog = new ArrayList<>();
-    this.ptCatalog = new ArrayList<>();
-    this.additionalProductCatalog = new ArrayList<>();
-    this.memberMemberships = new ArrayList<>();
-    this.orders = new ArrayList<>();
-    this.payments = new ArrayList<>();
-    this.points = null;
-    this.pointHistories = null;
-    this.trainers = null;
-    this.memberPTs = null;
-    this.ptSchedules = null;
-  }
-
-  public void setPointLists(List<Point> points, List<PointHistory> pointHistories) {
-    this.points = points;
-    this.pointHistories = pointHistories;
-  }
-
-  public void setPTData(List<Trainer> trainers, List<PT> memberPTs, List<PTSchedule> ptSchedules) {
-    this.trainers = trainers;
-    this.memberPTs = memberPTs;
-    this.ptSchedules = ptSchedules;
+  public PurchaseController(DBA dba) {
+    this.dao = new PurchaseDao(dba);
   }
 
   public boolean init() {
-    if (points == null || pointHistories == null) return false;
-    return trainers != null && memberPTs != null && ptSchedules != null;
+    return dao.init();
   }
 
-  // ─── 회원권 관련 ───
+  // ─── 회원권 ───
 
   public Membership findActiveMembership(String memberId) {
-    for (Membership ms : memberMemberships) {
-      if (ms.getMemberId().equals(memberId) && "ACTIVE".equals(ms.getStatus())) return ms;
-    }
-    return null;
+    return dao.findActiveMembershipByMemberId(memberId);
   }
 
   public int getMembershipDurationDays(String productName) {
@@ -85,41 +47,53 @@ public class PurchaseController {
     };
   }
 
+  public List<Membership> getMembershipCatalog() {
+    return dao.findAllMemberships();
+  }
+
   public Membership createMembership(String memberId, Membership product,
       LocalDate startDate, LocalDate endDate) {
-    String newId = "ms-" + String.format("%03d", memberMemberships.size() + 1);
+    String newId = "ms-" + UUID.randomUUID().toString().substring(0, 8);
     Membership newMs = new Membership(product.getProductId(), product.getProductName(),
         product.getPrice(), product.getDescription(),
         newId, memberId, "ACTIVE", startDate, endDate);
     if (!newMs.init()) return null;
-    memberMemberships.add(newMs);
+    if (!dao.saveMemberMembership(newMs)) return null;
     return newMs;
   }
 
-  // ─── 프로그램 관련 ───
+  // ─── 프로그램 ───
+
+  public List<ExerciseProgram> getProgramCatalog() {
+    return dao.findAllPrograms();
+  }
+
+  public List<Trainer> getAllTrainersList() {
+    return dao.findAllTrainers();
+  }
 
   public Trainer findTrainer(String trainerId) {
-    for (Trainer t : trainers) {
-      if (t.getTrainerId().equals(trainerId)) return t;
-    }
-    return null;
+    return dao.findTrainerById(trainerId);
   }
 
   public Order createProgramOrder(String memberId, ExerciseProgram program, LocalDate startDate) {
-    String orderId = "order-" + String.format("%03d", orders.size() + 1);
+    String orderId = "order-" + UUID.randomUUID().toString().substring(0, 8);
     Order order = new Order(orderId, memberId, program.getProductId(),
         1, program.getPrice(), "", "COMPLETED", LocalDateTime.now());
     if (!order.init()) return null;
-    orders.add(order);
-    program.setRemainingCapacity(program.getRemainingCapacity() - 1);
+    if (!dao.saveOrder(order)) return null;
     return order;
   }
 
-  // ─── 운동용품 관련 ───
+  // ─── 운동용품 ───
+
+  public List<SportEquipment> getSportEquipmentCatalog() {
+    return dao.findAllSportEquipments();
+  }
 
   public List<SportEquipment> searchSportEquipment(String keyword) {
     List<SportEquipment> result = new ArrayList<>();
-    for (SportEquipment se : sportEquipmentCatalog) {
+    for (SportEquipment se : dao.findAllSportEquipments()) {
       if (se.getProductName().contains(keyword) || se.getCategory().contains(keyword)) {
         result.add(se);
       }
@@ -130,125 +104,92 @@ public class PurchaseController {
   public Order createEquipmentOrder(String memberId, SportEquipment product,
       int quantity, String shippingAddress) {
     int totalAmount = product.getPrice() * quantity;
-    String orderId = "order-" + String.format("%03d", orders.size() + 1);
+    String orderId = "order-" + UUID.randomUUID().toString().substring(0, 8);
     Order order = new Order(orderId, memberId, product.getProductId(),
         quantity, totalAmount, shippingAddress, "COMPLETED", LocalDateTime.now());
     if (!order.init()) return null;
-    orders.add(order);
-    product.setStock(product.getStock() - quantity);
+    if (!dao.saveOrder(order)) return null;
     return order;
   }
 
-  // ─── PT 관련 ───
+  // ─── PT ───
+
+  public List<PT> getPtCatalog() {
+    return dao.findAllPTs();
+  }
 
   public PT createMemberPT(String memberId, PT product, String trainerId) {
-    String newPtId = "pt-" + String.format("%03d", memberPTs.size() + 1);
+    String newPtId = "pt-" + UUID.randomUUID().toString().substring(0, 8);
     PT newPT = new PT(product.getProductId(), product.getProductName(),
         product.getPrice(), product.getDescription(),
         newPtId, memberId, trainerId,
         product.getTotalCount(), product.getRemainingCount(), "ACTIVE");
     if (!newPT.init()) return null;
-    memberPTs.add(newPT);
+    if (!dao.saveMemberPT(newPT)) return null;
     return newPT;
   }
 
   public boolean addFirstPTSchedule(String ptId, String memberId, String trainerId,
       LocalDate date, LocalTime time) {
-    String scheduleId = "sched-" + String.format("%03d", ptSchedules.size() + 1);
+    String scheduleId = "sched-" + UUID.randomUUID().toString().substring(0, 8);
     PTSchedule schedule = new PTSchedule(scheduleId, ptId, memberId, trainerId,
         date, time, "RESERVED");
     if (!schedule.init()) return false;
-    ptSchedules.add(schedule);
-    return true;
+    return dao.savePTSchedule(schedule);
   }
 
   public boolean isSlotBooked(String trainerId, LocalDate date, LocalTime time) {
-    for (PTSchedule s : ptSchedules) {
-      if (s.getTrainerId().equals(trainerId)
-          && s.getDate().equals(date)
-          && s.getTime().equals(time)) {
-        return true;
-      }
-    }
-    return false;
+    return dao.isSlotBooked(trainerId, LocalDateTime.of(date, time));
   }
 
-  // ─── 결제 관련 ───
+  // ─── 부가상품 ───
 
-  public int getPointBalance(String memberId) {
-    for (Point p : points) {
-      if (p.getMemberId().equals(memberId)) return p.getBalance();
-    }
-    return 0;
-  }
-
-  public boolean processPayment(String memberId, int amount, String productId,
-      String productType, String paymentMethod, int usedPoints) {
-    int finalAmount = amount - usedPoints;
-    String paymentId = "pay-" + String.format("%03d", payments.size() + 1);
-    Payment payment = new Payment(paymentId, memberId, productId, productType,
-        paymentMethod, finalAmount, usedPoints, "COMPLETED", LocalDateTime.now());
-    if (!payment.init()) return false;
-    payments.add(payment);
-
-    if (usedPoints > 0) {
-      Point memberPoint = null;
-      for (Point p : points) {
-        if (p.getMemberId().equals(memberId)) { memberPoint = p; break; }
-      }
-      if (memberPoint != null) {
-        memberPoint.setBalance(memberPoint.getBalance() - usedPoints);
-        String histId = "ph-" + String.format("%03d", pointHistories.size() + 1);
-        pointHistories.add(new PointHistory(histId, memberId, "사용", -usedPoints,
-            productType + " 결제 포인트 사용", LocalDate.now(), memberPoint.getBalance()));
-      }
-    }
-    return true;
-  }
-
-  // ─── 부가상품 관련 ───
-
-  public List<Order> getAdditionalOrdersByMember(String memberId) {
-    List<String> additionalIds = new ArrayList<>();
-    for (AdditionalProduct ap : additionalProductCatalog) {
-      additionalIds.add(ap.getProductId());
-    }
-    List<Order> result = new ArrayList<>();
-    for (Order o : orders) {
-      if (o.getMemberId().equals(memberId) && additionalIds.contains(o.getProductId())) {
-        result.add(o);
-      }
-    }
-    return result;
+  public List<AdditionalProduct> getAdditionalProductCatalog() {
+    return dao.findAllAdditionalProducts();
   }
 
   public AdditionalProduct findAdditionalProduct(String productId) {
-    for (AdditionalProduct ap : additionalProductCatalog) {
+    for (AdditionalProduct ap : dao.findAllAdditionalProducts()) {
       if (ap.getProductId().equals(productId)) return ap;
     }
     return null;
   }
 
   public Order createAdditionalProductOrder(String memberId, AdditionalProduct product) {
-    String orderId = "order-" + String.format("%03d", orders.size() + 1);
+    String orderId = "order-" + UUID.randomUUID().toString().substring(0, 8);
     Order order = new Order(orderId, memberId, product.getProductId(),
         1, product.getPrice(), "", "COMPLETED", LocalDateTime.now());
     if (!order.init()) return null;
-    orders.add(order);
+    if (!dao.saveOrder(order)) return null;
     return order;
   }
 
-  // ─── Getters ───
+  // ─── 결제 ───
 
-  public List<Membership> getMembershipCatalog() { return membershipCatalog; }
-  public List<ExerciseProgram> getProgramCatalog() { return programCatalog; }
-  public List<SportEquipment> getSportEquipmentCatalog() { return sportEquipmentCatalog; }
-  public List<PT> getPtCatalog() { return ptCatalog; }
-  public List<AdditionalProduct> getAdditionalProductCatalog() { return additionalProductCatalog; }
-  public List<Membership> getMemberMemberships() { return memberMemberships; }
-  public List<Order> getOrders() { return orders; }
-  public List<Payment> getPayments() { return payments; }
-  public List<PT> getMemberPTs() { return memberPTs; }
-  public List<PTSchedule> getPtSchedules() { return ptSchedules; }
-  public List<Trainer> getTrainers() { return trainers; }
+  public int getPointBalance(String memberId) {
+    Point p = dao.findPointByMemberId(memberId);
+    return p != null ? p.getBalance() : 0;
+  }
+
+  public boolean processPayment(String memberId, int amount, String productId,
+      String productType, String paymentMethod, int usedPoints) {
+    int finalAmount = amount - usedPoints;
+    String paymentId = "pay-" + UUID.randomUUID().toString().substring(0, 8);
+    Payment payment = new Payment(paymentId, memberId, productId, productType,
+        paymentMethod, finalAmount, usedPoints, "COMPLETED", LocalDateTime.now());
+    if (!payment.init()) return false;
+    if (!dao.savePayment(payment)) return false;
+
+    if (usedPoints > 0) {
+      Point memberPoint = dao.findPointByMemberId(memberId);
+      if (memberPoint != null) {
+        memberPoint.setBalance(memberPoint.getBalance() - usedPoints);
+        dao.updatePoint(memberPoint);
+        String histId = "ph-" + UUID.randomUUID().toString().substring(0, 8);
+        dao.savePointHistory(new PointHistory(histId, memberId, "사용", -usedPoints,
+            productType + " 결제 포인트 사용", LocalDate.now(), memberPoint.getBalance()));
+      }
+    }
+    return true;
+  }
 }
