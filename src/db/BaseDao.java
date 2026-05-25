@@ -1,26 +1,20 @@
 package db;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 
 public abstract class BaseDao {
-  protected DBA dba;
+  protected EntityManagerFactory emf;
 
   protected BaseDao(DBA dba) {
-    this.dba = dba;
+    this.emf = dba.getEmf();
   }
 
   public boolean init() {
-    return dba.isConnected();
+    return emf != null && emf.isOpen();
   }
 
-  protected void close(ResultSet rs, PreparedStatement pstmt) {
-    if (rs != null) try { rs.close(); } catch (SQLException ignored) {}
-    if (pstmt != null) try { pstmt.close(); } catch (SQLException ignored) {}
-  }
-
-  protected void logError(String context, SQLException e) {
-    System.out.println("[DB 오류] " + context + ": " + e.getMessage());
+  protected EntityManager openEm() {
+    return emf.createEntityManager();
   }
 }
