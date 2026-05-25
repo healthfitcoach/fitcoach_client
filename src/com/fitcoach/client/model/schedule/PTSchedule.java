@@ -1,48 +1,68 @@
 package com.fitcoach.client.model.schedule;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+@Entity
+@Table(name = "pt_schedule")
 public class PTSchedule {
 
-    private String scheduleId;
-    private String ptId;
-    private String memberId;
-    private String trainerId;
-    private LocalDate date;
-    private LocalTime time;
-    private String status;
+  @Id
+  @Column(name = "schedule_id")
+  private String scheduleId;
 
-    public PTSchedule(String scheduleId, String ptId, String memberId, String trainerId,
-                      LocalDate date, LocalTime time, String status) {
-        this.scheduleId = scheduleId;
-        this.ptId = ptId;
-        this.memberId = memberId;
-        this.trainerId = trainerId;
-        this.date = date;
-        this.time = time;
-        this.status = status;
-    }
+  @Column(name = "pt_id")
+  private String ptId;
 
-    public boolean init() {
-        return true;
-    }
+  @Column(name = "member_id")
+  private String memberId;
 
-    public void reserve() {}
+  @Column(name = "trainer_id")
+  private String trainerId;
 
-    public void search() {}
+  @Column(name = "date")
+  private LocalDate date;
 
-    public void cancel() {}
+  @Column(name = "time")
+  private LocalTime time;
 
-    // Getters & Setters
-    public String getScheduleId() { return scheduleId; }
-    public String getPtId() { return ptId; }
-    public String getMemberId() { return memberId; }
-    public String getTrainerId() { return trainerId; }
-    public LocalDate getDate() { return date; }
-    public void setDate(LocalDate date) { this.date = date; }
-    public LocalTime getTime() { return time; }
-    public void setTime(LocalTime time) { this.time = time; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+  @Column(name = "status")
+  private String status;
+
+  public PTSchedule() {}  // JPA 필수 no-arg 생성자
+
+  public PTSchedule(String scheduleId, String ptId, String memberId, String trainerId,
+      LocalDate date, LocalTime time, String status) {
+    this.scheduleId = scheduleId;
+    this.ptId = ptId;
+    this.memberId = memberId;
+    this.trainerId = trainerId;
+    this.date = date;
+    this.time = time;
+    this.status = status;
+  }
+
+  public boolean init() { return true; }
+
+  public void reserve() {}
+
+  public void search() {}
+
+  public void cancel() {}
+
+  // Getters & Setters
+  public String getScheduleId() { return scheduleId; }
+  public String getPtId() { return ptId; }
+  public String getMemberId() { return memberId; }
+  public String getTrainerId() { return trainerId; }
+  public LocalDate getDate() { return date; }
+  public void setDate(LocalDate date) { this.date = date; }
+  public LocalTime getTime() { return time; }
+  public void setTime(LocalTime time) { this.time = time; }
+  public String getStatus() { return status; }
+  public void setStatus(String status) { this.status = status; }
 }

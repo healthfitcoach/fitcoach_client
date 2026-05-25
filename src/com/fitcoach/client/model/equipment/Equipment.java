@@ -1,44 +1,65 @@
 package com.fitcoach.client.model.equipment;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
+@Table(name = "equipment")
 public class Equipment {
 
-    private String equipmentId;
-    private String name;
-    private String description;
-    private String category;
-    private String status;
-    private List<ExerciseMethod> exerciseMethods;
+  @Id
+  @Column(name = "equipment_id")
+  private String equipmentId;
 
-    public Equipment(String equipmentId, String name, String description,
-                     String category, String status) {
-        this.equipmentId = equipmentId;
-        this.name = name;
-        this.description = description;
-        this.category = category;
-        this.status = status;
-        this.exerciseMethods = new ArrayList<>();
-    }
+  @Column(name = "name")
+  private String name;
 
-    public boolean init() {
-        return true;
-    }
+  @Column(name = "description")
+  private String description;
 
-    public void search() {}
+  @Column(name = "category")
+  private String category;
 
-    public void listAll() {}
+  @Column(name = "status")
+  private String status;
 
-    public void getDetail() {}
+  @Transient  // Aggregation 필드 — DB 컬럼 아님
+  private List<ExerciseMethod> exerciseMethods;
 
-    // Getters & Setters
-    public String getEquipmentId() { return equipmentId; }
-    public String getName() { return name; }
-    public String getDescription() { return description; }
-    public String getCategory() { return category; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-    public List<ExerciseMethod> getExerciseMethods() { return exerciseMethods; }
-    public void addExerciseMethod(ExerciseMethod method) { this.exerciseMethods.add(method); }
+  public Equipment() {  // JPA 필수 no-arg 생성자
+    this.exerciseMethods = new ArrayList<>();
+  }
+
+  public Equipment(String equipmentId, String name, String description,
+      String category, String status) {
+    this.equipmentId = equipmentId;
+    this.name = name;
+    this.description = description;
+    this.category = category;
+    this.status = status;
+    this.exerciseMethods = new ArrayList<>();
+  }
+
+  public boolean init() { return true; }
+
+  public void search() {}
+
+  public void listAll() {}
+
+  public void getDetail() {}
+
+  // Getters & Setters
+  public String getEquipmentId() { return equipmentId; }
+  public String getName() { return name; }
+  public String getDescription() { return description; }
+  public String getCategory() { return category; }
+  public String getStatus() { return status; }
+  public void setStatus(String status) { this.status = status; }
+  public List<ExerciseMethod> getExerciseMethods() { return exerciseMethods; }
+  public void addExerciseMethod(ExerciseMethod method) { this.exerciseMethods.add(method); }
 }
