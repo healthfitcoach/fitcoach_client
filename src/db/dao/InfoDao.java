@@ -1,16 +1,13 @@
 package db.dao;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import com.fitcoach.client.model.equipment.Equipment;
 import com.fitcoach.client.model.equipment.ExerciseMethod;
 import com.fitcoach.client.model.notice.Notice;
 import db.BaseDao;
 import db.DBA;
+import jakarta.persistence.EntityManager;
+import java.util.Arrays;
+import java.util.List;
 
 public class InfoDao extends BaseDao {
   public InfoDao(DBA dba) {
@@ -20,161 +17,73 @@ public class InfoDao extends BaseDao {
   // ===================== 기구 =====================
 
   public List<Equipment> findAllEquipments() {
-    String sql = "SELECT * FROM equipment";
-    PreparedStatement pstmt = null;
-    ResultSet rs = null;
-    List<Equipment> list = new ArrayList<>();
-    try {
-      pstmt = dba.getConnection().prepareStatement(sql);
-      rs = pstmt.executeQuery();
-      while (rs.next()) list.add(mapEquipment(rs));
-      return list;
-    } catch (SQLException e) {
-      logError("InfoDao.findAllEquipments", e);
-      return list;
-    } finally {
-      close(rs, pstmt);
+    try (EntityManager em = openEm()) {
+      return em.createQuery("FROM Equipment", Equipment.class).getResultList();
     }
   }
 
   public List<Equipment> searchEquipments(String keyword) {
-    String sql = "SELECT * FROM equipment WHERE name LIKE ? OR category LIKE ?";
-    PreparedStatement pstmt = null;
-    ResultSet rs = null;
-    List<Equipment> list = new ArrayList<>();
-    try {
+    try (EntityManager em = openEm()) {
       String pattern = "%" + keyword + "%";
-      pstmt = dba.getConnection().prepareStatement(sql);
-      pstmt.setString(1, pattern);
-      pstmt.setString(2, pattern);
-      rs = pstmt.executeQuery();
-      while (rs.next()) list.add(mapEquipment(rs));
-      return list;
-    } catch (SQLException e) {
-      logError("InfoDao.searchEquipments", e);
-      return list;
-    } finally {
-      close(rs, pstmt);
+      return em.createQuery(
+              "FROM Equipment e WHERE e.name LIKE :kw OR e.category LIKE :kw",
+              Equipment.class)
+          .setParameter("kw", pattern)
+          .getResultList();
     }
   }
 
   public List<ExerciseMethod> findAllExerciseMethods() {
-    String sql = "SELECT * FROM exercise_method";
-    PreparedStatement pstmt = null;
-    ResultSet rs = null;
-    List<ExerciseMethod> list = new ArrayList<>();
-    try {
-      pstmt = dba.getConnection().prepareStatement(sql);
-      rs = pstmt.executeQuery();
-      while (rs.next()) list.add(mapExerciseMethod(rs));
-      return list;
-    } catch (SQLException e) {
-      logError("InfoDao.findAllExerciseMethods", e);
-      return list;
-    } finally {
-      close(rs, pstmt);
+    try (EntityManager em = openEm()) {
+      return em.createQuery("FROM ExerciseMethod", ExerciseMethod.class).getResultList();
     }
   }
 
   public List<ExerciseMethod> findExerciseMethodsByEquipmentId(String equipmentId) {
-    String sql = "SELECT * FROM exercise_method WHERE equipment_id = ?";
-    PreparedStatement pstmt = null;
-    ResultSet rs = null;
-    List<ExerciseMethod> list = new ArrayList<>();
-    try {
-      pstmt = dba.getConnection().prepareStatement(sql);
-      pstmt.setString(1, equipmentId);
-      rs = pstmt.executeQuery();
-      while (rs.next()) list.add(mapExerciseMethod(rs));
-      return list;
-    } catch (SQLException e) {
-      logError("InfoDao.findExerciseMethodsByEquipmentId", e);
-      return list;
-    } finally {
-      close(rs, pstmt);
+    try (EntityManager em = openEm()) {
+      return em.createQuery(
+              "FROM ExerciseMethod m WHERE m.equipmentId = :eid", ExerciseMethod.class)
+          .setParameter("eid", equipmentId)
+          .getResultList();
     }
   }
 
   // ===================== 공지사항 =====================
 
   public List<Notice> findAllNotices() {
-    String sql = "SELECT * FROM notice ORDER BY write_date DESC";
-    PreparedStatement pstmt = null;
-    ResultSet rs = null;
-    List<Notice> list = new ArrayList<>();
-    try {
-      pstmt = dba.getConnection().prepareStatement(sql);
-      rs = pstmt.executeQuery();
-      while (rs.next()) list.add(mapNotice(rs));
-      return list;
-    } catch (SQLException e) {
-      logError("InfoDao.findAllNotices", e);
-      return list;
-    } finally {
-      close(rs, pstmt);
+    try (EntityManager em = openEm()) {
+      List<Notice> notices = em.createQuery(
+              "FROM Notice n ORDER BY n.writeDate DESC", Notice.class)
+          .getResultList();
+      // DB의 쉼표 구분 문자열 → Java List 변환
+      for (Notice n : notices) {
+        String raw = n.getReadByMembersRaw();
+        if (raw != null && !raw.isEmpty()) {
+          Arrays.stream(raw.split(","))
+              .map(String::trim)
+              .forEach(id -> n.getReadByMembers().add(id));
+        }
+      }
+      return notices;
     }
   }
 
   public boolean updateNoticeReadStatus(String noticeId, String memberId) {
-    String sql = "UPDATE notice SET read_by_members = "
-        + "CASE WHEN read_by_members IS NULL OR read_by_members = '' "
-        + "THEN ? ELSE CONCAT(read_by_members, ',', ?) END "
-        + "WHERE notice_id = ?";
-    PreparedStatement pstmt = null;
-    try {
-      pstmt = dba.getConnection().prepareStatement(sql);
-      pstmt.setString(1, memberId);
-      pstmt.setString(2, memberId);
-      pstmt.setString(3, noticeId);
-      return pstmt.executeUpdate() > 0;
-    } catch (SQLException e) {
-      logError("InfoDao.updateNoticeReadStatus", e);
+    // read_by_members는 쉼표 구분 문자열 — JPQL로 CONCAT 처리
+    try (EntityManager em = openEm()) {
+      em.getTransaction().begin();
+      Notice notice = em.find(Notice.class, noticeId);
+      if (notice == null) { em.getTransaction().rollback(); return false; }
+      String current = notice.getReadByMembersRaw();
+      String updated = (current == null || current.isEmpty())
+          ? memberId
+          : current + "," + memberId;
+      notice.setReadByMembersRaw(updated);
+      em.getTransaction().commit();
+      return true;
+    } catch (Exception e) {
+      System.out.println("[JPA 오류] InfoDao.updateNoticeReadStatus: " + e.getMessage());
       return false;
-    } finally {
-      close(null, pstmt);
     }
-  }
-
-  // ===================== mapRow 헬퍼 =====================
-
-  private Equipment mapEquipment(ResultSet rs) throws SQLException {
-    return new Equipment(
-        rs.getString("equipment_id"),
-        rs.getString("name"),
-        rs.getString("description"),
-        rs.getString("category"),
-        rs.getString("status")
-    );
-  }
-
-  private ExerciseMethod mapExerciseMethod(ResultSet rs) throws SQLException {
-    return new ExerciseMethod(
-        rs.getString("method_id"),
-        rs.getString("equipment_id"),
-        rs.getString("exercise_name"),
-        rs.getString("target_body_part"),
-        rs.getString("difficulty"),
-        rs.getString("preparation_pose"),
-        rs.getString("step_by_step_method"),
-        rs.getString("image"),
-        rs.getString("video_url")
-    );
-  }
-
-  private Notice mapNotice(ResultSet rs) throws SQLException {
-    Notice notice = new Notice(
-        rs.getString("notice_id"),
-        rs.getString("title"),
-        rs.getString("content"),
-        rs.getString("category"),
-        rs.getDate("write_date").toLocalDate(),
-        rs.getString("attachment")
-    );
-    String readByMembers = rs.getString("read_by_members");
-    if (readByMembers != null && !readByMembers.isEmpty()) {
-      Arrays.stream(readByMembers.split(","))
-          .forEach(id -> notice.getReadByMembers().add(id.trim()));
-    }
-    return notice;
   }
 }
