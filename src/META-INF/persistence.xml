@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="3.1"
+  xmlns="https://jakarta.ee/xml/ns/persistence"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence
+    https://jakarta.ee/xml/ns/persistence/persistence_3_1.xsd">
+
+  <persistence-unit name="fitcoach" transaction-type="RESOURCE_LOCAL">
+    <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+
+    <class>com.fitcoach.client.model.member.Member</class>
+    <class>com.fitcoach.client.model.member.Attendance</class>
+    <class>com.fitcoach.client.model.member.ExerciseRecord</class>
+    <class>com.fitcoach.client.model.product.Membership</class>
+    <class>com.fitcoach.client.model.product.PT</class>
+    <class>com.fitcoach.client.model.product.ExerciseProgram</class>
+    <class>com.fitcoach.client.model.product.SportEquipment</class>
+    <class>com.fitcoach.client.model.product.AdditionalProduct</class>
+    <class>com.fitcoach.client.model.order.Order</class>
+    <class>com.fitcoach.client.model.order.Payment</class>
+    <class>com.fitcoach.client.model.point.Point</class>
+    <class>com.fitcoach.client.model.point.PointHistory</class>
+    <class>com.fitcoach.client.model.point.PointPolicy</class>
+    <class>com.fitcoach.client.model.schedule.PTSchedule</class>
+    <class>com.fitcoach.client.model.schedule.Trainer</class>
+    <class>com.fitcoach.client.model.equipment.Equipment</class>
+    <class>com.fitcoach.client.model.equipment.ExerciseMethod</class>
+    <class>com.fitcoach.client.model.notice.Notice</class>
+
+    <properties>
+      <property name="jakarta.persistence.jdbc.driver"   value="com.mysql.cj.jdbc.Driver"/>
+      <property name="jakarta.persistence.jdbc.url"      value="jdbc:mysql://localhost:3306/fitcoach?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=Asia/Seoul"/>
+      <property name="jakarta.persistence.jdbc.user"     value="fitcoach"/>
+      <property name="jakarta.persistence.jdbc.password" value="fitcoach1234"/>
+      <property name="hibernate.show_sql"                value="true"/>
+      <property name="hibernate.format_sql"              value="true"/>
+    </properties>
+  </persistence-unit>
+</persistence>
