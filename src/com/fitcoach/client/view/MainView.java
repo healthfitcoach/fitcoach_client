@@ -1,8 +1,5 @@
 package com.fitcoach.client.view;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
 import com.fitcoach.client.controller.ActivityController;
 import com.fitcoach.client.controller.AuthController;
 import com.fitcoach.client.controller.InfoController;
@@ -82,23 +79,8 @@ public class MainView {
   }
 
   private DBA createDBA() {
-    Properties props = new Properties();
-    try (InputStream is = getClass().getClassLoader().getResourceAsStream("db.properties")) {
-      if (is == null) {
-        System.out.println("db.properties 파일을 찾을 수 없습니다.");
-        return null;
-      }
-      props.load(is);
-      String host = props.getProperty("db.host");
-      int    port = Integer.parseInt(props.getProperty("db.port"));
-      String name = props.getProperty("db.name");
-      String user = props.getProperty("db.user");
-      String pass = props.getProperty("db.password");
-      return new DBA(host, port, name, user, pass);
-    } catch (IOException e) {
-      System.out.println("db.properties 읽기 실패: " + e.getMessage());
-      return null;
-    }
+    // 접속 정보는 persistence.xml에서 관리 — 코드에서 분리됨
+    return new DBA();
   }
 
   // ─── 메인 루프 ────────────────────────────────────────────────
