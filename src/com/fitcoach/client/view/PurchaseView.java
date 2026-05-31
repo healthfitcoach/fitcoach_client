@@ -9,6 +9,7 @@ import com.fitcoach.client.controller.PurchaseController;
 import com.fitcoach.client.model.order.Order;
 import com.fitcoach.client.model.product.AdditionalProduct;
 import com.fitcoach.client.model.product.ExerciseProgram;
+import com.fitcoach.client.model.product.MemberProduct;
 import com.fitcoach.client.model.product.Membership;
 import com.fitcoach.client.model.product.PT;
 import com.fitcoach.client.model.product.SportEquipment;
@@ -129,7 +130,7 @@ public class PurchaseView {
     if (!iu.readLine().equalsIgnoreCase("Y")) return;
 
     cu.showStep(3, "현재 활성화된 회원권 보유 여부를 확인합니다.");
-    Membership active = purchase.findActiveMembership(memberId);
+    MemberProduct active = purchase.findActiveMembership(memberId);
     boolean isExtension = false;
     if (active != null) {
       System.out.println("[현재 보유 회원권]");
@@ -175,7 +176,7 @@ public class PurchaseView {
     if (!paid) return;
 
     cu.showStep(7, "회원권을 계정에 등록합니다.");
-    Membership newMs = purchase.createMembership(memberId, selected, startDate, endDate);
+    MemberProduct newMs = purchase.createMembership(memberId, selected, startDate, endDate);
     if (newMs == null) {
       System.out.println("회원권 등록에 실패하였습니다. 고객센터에 문의해주세요.");
       return;
@@ -516,12 +517,12 @@ public class PurchaseView {
     if (!paid) return;
 
     cu.showStep(7, "PT 이용권을 계정에 등록합니다.");
-    PT newPT = purchase.createMemberPT(memberId, selectedPT, selectedTrainer.getTrainerId());
+    MemberProduct newPT = purchase.createMemberPT(memberId, selectedPT, selectedTrainer.getTrainerId());
     if (newPT == null) {
       System.out.println("PT 이용권 등록에 실패하였습니다. 고객센터에 문의해주세요.");
       return;
     }
-    boolean scheduled = purchase.addFirstPTSchedule(newPT.getPtId(), memberId,
+    boolean scheduled = purchase.addFirstPTSchedule(newPT.getMemberProductId(), memberId,
         selectedTrainer.getTrainerId(), chosenDate, chosenTime);
     if (!scheduled) {
       System.out.println("PT 이용권 등록에 실패하였습니다. 고객센터에 문의해주세요.");

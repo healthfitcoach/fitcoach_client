@@ -10,7 +10,7 @@ import com.fitcoach.client.model.order.Order;
 import com.fitcoach.client.model.point.Point;
 import com.fitcoach.client.model.point.PointHistory;
 import com.fitcoach.client.model.product.AdditionalProduct;
-import com.fitcoach.client.model.product.Membership;
+import com.fitcoach.client.model.product.MemberProduct;
 import com.fitcoach.client.util.ConsoleUtil;
 import com.fitcoach.client.util.InputUtil;
 
@@ -57,7 +57,7 @@ public class MemberView {
 
       cu.showSeparator();
       System.out.println("[회원권 현황]");
-      Membership active = member.getActiveMembership(current.getMemberId());
+      MemberProduct active = member.getActiveMembership(current.getMemberId());
       if (active == null) {
         System.out.println("보유 중인 회원권이 없습니다.");
       } else {
@@ -188,7 +188,7 @@ public class MemberView {
     cu.showStep(2, "회원권 관리 화면을 출력합니다.");
     cu.showStep(3, "잔여기간 조회 유스케이스(UC17)를 실행합니다.");
 
-    Membership active = member.getActiveMembership(memberId);
+    MemberProduct active = member.getActiveMembership(memberId);
     if (active == null) {
       System.out.println("현재 보유 중인 회원권이 없습니다.");
       System.out.println("[회원권 구매하기] 1. 구매   0. 돌아가기");
@@ -233,7 +233,7 @@ public class MemberView {
   public void showCheckRemainingPeriod() {
     String memberId = auth.getCurrentMember().getMemberId();
     cu.showStep(2, "회원권 정보를 조회합니다.");
-    Membership active = member.getActiveMembership(memberId);
+    MemberProduct active = member.getActiveMembership(memberId);
 
     if (active == null) {
       System.out.println("회원권이 만료되었습니다.");
@@ -449,21 +449,15 @@ public class MemberView {
     }
   }
 
-  private void showRemainingPeriod(Membership ms) {
+  private void showRemainingPeriod(MemberProduct ms) {
     cu.showSeparator();
     System.out.println("[회원권 잔여기간]");
     System.out.println("종류   : " + ms.getProductName());
     System.out.println("시작일 : " + ms.getStartDate());
     System.out.println("만료일 : " + ms.getEndDate());
-    if (ms.getPauseDate() != null) {
-      System.out.println("상태   : 일시정지");
-      System.out.println("정지일 : " + ms.getPauseDate());
-      if (ms.getResumeDate() != null) System.out.println("재개일 : " + ms.getResumeDate());
-    } else {
-      long remaining = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), ms.getEndDate());
-      if (remaining < 0) System.out.println("상태   : 만료됨");
-      else System.out.println("잔여일 : " + remaining + "일");
-    }
+    long remaining = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), ms.getEndDate());
+    if (remaining < 0) System.out.println("상태   : 만료됨");
+    else System.out.println("잔여일 : " + remaining + "일");
     cu.showSeparator();
   }
 }

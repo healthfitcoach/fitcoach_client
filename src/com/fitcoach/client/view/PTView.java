@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import com.fitcoach.client.controller.AuthController;
 import com.fitcoach.client.controller.PTController;
-import com.fitcoach.client.model.product.PT;
+import com.fitcoach.client.model.product.MemberProduct;
 import com.fitcoach.client.model.schedule.Trainer;
 import com.fitcoach.client.util.ConsoleUtil;
 import com.fitcoach.client.util.InputUtil;
@@ -27,19 +27,19 @@ public class PTView {
   public void showSchedulePT() {
     String memberId = auth.getCurrentMember().getMemberId();
 
-    List<PT> myPTs = pt.getActivePTsByMember(memberId);
+    List<MemberProduct> myPTs = pt.getActivePTsByMember(memberId);
     if (myPTs.isEmpty()) {
       System.out.println("등록된 PT 이용권이 없습니다. PT를 먼저 구매해주세요.");
       return;
     }
 
-    PT selectedPT;
+    MemberProduct selectedPT;
     if (myPTs.size() == 1) {
       selectedPT = myPTs.get(0);
     } else {
       cu.showStep(1, "예약할 PT 이용권을 선택합니다.");
       for (int i = 0; i < myPTs.size(); i++) {
-        PT p = myPTs.get(i);
+        MemberProduct p = myPTs.get(i);
         Trainer t = pt.findTrainer(p.getTrainerId());
         String tName = (t != null) ? t.getName() : "미정";
         System.out.printf("%d. %s | 트레이너: %s | 잔여: %d회%n",
@@ -128,13 +128,15 @@ public class PTView {
     cu.showPrompt();
     if (!iu.readLine().equalsIgnoreCase("Y")) return;
 
-    boolean reserved = pt.reserveSchedule(selectedPT.getPtId(), memberId,
+    boolean reserved = pt.reserveSchedule(selectedPT.getMemberProductId(), memberId,
         trainer.getTrainerId(), chosenDate, chosenTime);
     if (!reserved) {
       System.out.println("예약 처리 중 오류가 발생하였습니다. 잠시 후 다시 시도해주세요.");
       return;
     }
     selectedPT.setRemainingCount(selectedPT.getRemainingCount() - 1);
+    if (selectedPT.getRemainingCount() == 0) selectedPT.setStatus("COMPLETED");
+    pt.updateMemberProduct(selectedPT);
     System.out.println("[알림] " + trainer.getName() + " 트레이너에게 신규 예약 알림을 전송했습니다.");
     cu.showStep(7, "PT 일정이 예약되었습니다.");
   }
