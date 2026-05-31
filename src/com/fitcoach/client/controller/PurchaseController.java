@@ -12,6 +12,7 @@ import com.fitcoach.client.model.point.Point;
 import com.fitcoach.client.model.point.PointHistory;
 import com.fitcoach.client.model.product.AdditionalProduct;
 import com.fitcoach.client.model.product.ExerciseProgram;
+import com.fitcoach.client.model.product.MemberProduct;
 import com.fitcoach.client.model.product.Membership;
 import com.fitcoach.client.model.product.PT;
 import com.fitcoach.client.model.product.SportEquipment;
@@ -33,7 +34,7 @@ public class PurchaseController {
 
   // ─── 회원권 ───
 
-  public Membership findActiveMembership(String memberId) {
+  public MemberProduct findActiveMembership(String memberId) {
     return dao.findActiveMembershipByMemberId(memberId);
   }
 
@@ -51,15 +52,15 @@ public class PurchaseController {
     return dao.findAllMemberships();
   }
 
-  public Membership createMembership(String memberId, Membership product,
+  public MemberProduct createMembership(String memberId, Membership product,
       LocalDate startDate, LocalDate endDate) {
-    String newId = "ms-" + UUID.randomUUID().toString().substring(0, 8);
-    Membership newMs = new Membership(product.getProductId(), product.getProductName(),
-        product.getPrice(), product.getDescription(),
-        newId, memberId, "ACTIVE", startDate, endDate);
-    if (!newMs.init()) return null;
-    if (!dao.saveMemberMembership(newMs)) return null;
-    return newMs;
+    String newId = "mp-" + UUID.randomUUID().toString().substring(0, 8);
+    MemberProduct mp = new MemberProduct(newId, memberId, product.getProductId(),
+        "MEMBERSHIP", product.getProductName(), product.getDescription(), "ACTIVE",
+        startDate, endDate, null, 0, 0, 0, LocalDateTime.now());
+    if (!mp.init()) return null;
+    if (!dao.saveMemberProduct(mp)) return null;
+    return mp;
   }
 
   // ─── 프로그램 ───
@@ -118,21 +119,21 @@ public class PurchaseController {
     return dao.findAllPTs();
   }
 
-  public PT createMemberPT(String memberId, PT product, String trainerId) {
-    String newPtId = "pt-" + UUID.randomUUID().toString().substring(0, 8);
-    PT newPT = new PT(product.getProductId(), product.getProductName(),
-        product.getPrice(), product.getDescription(),
-        newPtId, memberId, trainerId,
-        product.getTotalCount(), product.getRemainingCount(), "ACTIVE");
-    if (!newPT.init()) return null;
-    if (!dao.saveMemberPT(newPT)) return null;
-    return newPT;
+  public MemberProduct createMemberPT(String memberId, PT product, String trainerId) {
+    String newId = "mp-" + UUID.randomUUID().toString().substring(0, 8);
+    MemberProduct mp = new MemberProduct(newId, memberId, product.getProductId(),
+        "PT", product.getProductName(), product.getDescription(), "ACTIVE",
+        null, null, trainerId,
+        product.getTotalCount(), product.getTotalCount(), 0, LocalDateTime.now());
+    if (!mp.init()) return null;
+    if (!dao.saveMemberProduct(mp)) return null;
+    return mp;
   }
 
-  public boolean addFirstPTSchedule(String ptId, String memberId, String trainerId,
+  public boolean addFirstPTSchedule(String memberProductId, String memberId, String trainerId,
       LocalDate date, LocalTime time) {
     String scheduleId = "sched-" + UUID.randomUUID().toString().substring(0, 8);
-    PTSchedule schedule = new PTSchedule(scheduleId, ptId, memberId, trainerId,
+    PTSchedule schedule = new PTSchedule(scheduleId, memberProductId, memberId, trainerId,
         date, time, "RESERVED");
     if (!schedule.init()) return false;
     return dao.savePTSchedule(schedule);
@@ -161,6 +162,12 @@ public class PurchaseController {
         1, product.getPrice(), "", "COMPLETED", LocalDateTime.now());
     if (!order.init()) return null;
     if (!dao.saveOrder(order)) return null;
+
+    String newId = "mp-" + UUID.randomUUID().toString().substring(0, 8);
+    MemberProduct mp = new MemberProduct(newId, memberId, product.getProductId(),
+        "ADDITIONAL", product.getProductName(), product.getDescription(), "ACTIVE",
+        null, null, null, 0, 0, product.getUsagePeriod(), LocalDateTime.now());
+    dao.saveMemberProduct(mp);
     return order;
   }
 

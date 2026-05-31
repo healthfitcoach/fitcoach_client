@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
-import com.fitcoach.client.model.product.PT;
+import com.fitcoach.client.model.product.MemberProduct;
 import com.fitcoach.client.model.schedule.PTSchedule;
 import com.fitcoach.client.model.schedule.Trainer;
 import db.DBA;
@@ -34,7 +34,7 @@ public class PTController {
     return dao.findTrainerById(trainerId);
   }
 
-  public List<PT> getActivePTsByMember(String memberId) {
+  public List<MemberProduct> getActivePTsByMember(String memberId) {
     return dao.findActivePTsByMemberId(memberId);
   }
 
@@ -42,16 +42,16 @@ public class PTController {
     return dao.isSlotBooked(trainerId, LocalDateTime.of(date, time));
   }
 
-  public boolean reserveSchedule(String ptId, String memberId, String trainerId,
+  public boolean reserveSchedule(String memberProductId, String memberId, String trainerId,
       LocalDate date, LocalTime time) {
     String scheduleId = "sched-" + UUID.randomUUID().toString().substring(0, 8);
-    PTSchedule schedule = new PTSchedule(scheduleId, ptId, memberId, trainerId,
+    PTSchedule schedule = new PTSchedule(scheduleId, memberProductId, memberId, trainerId,
         date, time, "RESERVED");
     if (!schedule.init()) return false;
     return dao.savePTSchedule(schedule);
   }
 
-  public boolean updatePT(PT pt) {
-    return dao.updatePT(pt);
+  public boolean updateMemberProduct(MemberProduct mp) {
+    return dao.updateMemberProduct(mp);
   }
 }

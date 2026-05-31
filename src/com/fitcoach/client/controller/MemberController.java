@@ -8,8 +8,8 @@ import com.fitcoach.client.model.order.Order;
 import com.fitcoach.client.model.point.Point;
 import com.fitcoach.client.model.point.PointHistory;
 import com.fitcoach.client.model.product.AdditionalProduct;
+import com.fitcoach.client.model.product.MemberProduct;
 import com.fitcoach.client.model.product.Membership;
-import com.fitcoach.client.model.product.PT;
 import db.DBA;
 import db.dao.MemberDao;
 
@@ -33,9 +33,9 @@ public class MemberController {
 
   // ─── UC14: 내정보 조회 ───
 
-  public Membership getActiveMembership(String memberId) {
+  public MemberProduct getActiveMembership(String memberId) {
     return dao.findMembershipsByMemberId(memberId).stream()
-        .filter(ms -> "ACTIVE".equals(ms.getStatus()))
+        .filter(mp -> "ACTIVE".equals(mp.getStatus()))
         .findFirst().orElse(null);
   }
 
@@ -74,13 +74,13 @@ public class MemberController {
     return activity.getAttendancesByMember(memberId);
   }
 
-  public List<Membership> getMembershipsByMemberId(String memberId) {
+  public List<MemberProduct> getMembershipsByMemberId(String memberId) {
     return dao.findMembershipsByMemberId(memberId);
   }
 
   public int getActivePtRemainingCount(String memberId) {
     return pt.getActivePTsByMember(memberId).stream()
-        .mapToInt(PT::getRemainingCount).sum();
+        .mapToInt(MemberProduct::getRemainingCount).sum();
   }
 
   // ─── UC18: 부가상품 관리 ───
@@ -133,7 +133,7 @@ public class MemberController {
     return purchase.getMembershipDurationDays(productName);
   }
 
-  public Membership createMembership(String memberId, Membership product,
+  public MemberProduct createMembership(String memberId, Membership product,
       LocalDate startDate, LocalDate endDate) {
     return purchase.createMembership(memberId, product, startDate, endDate);
   }
