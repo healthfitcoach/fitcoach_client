@@ -6,6 +6,7 @@ import com.fitcoach.client.model.point.Point;
 import com.fitcoach.client.model.point.PointHistory;
 import com.fitcoach.client.model.product.AdditionalProduct;
 import com.fitcoach.client.model.product.ExerciseProgram;
+import com.fitcoach.client.model.product.MemberProduct;
 import com.fitcoach.client.model.product.Membership;
 import com.fitcoach.client.model.product.PT;
 import com.fitcoach.client.model.product.SportEquipment;
@@ -26,9 +27,7 @@ public class PurchaseDao extends BaseDao {
 
   public List<Membership> findAllMemberships() {
     try (EntityManager em = openEm()) {
-      return em.createQuery(
-              "FROM Membership m WHERE m.memberId IS NULL", Membership.class)
-          .getResultList();
+      return em.createQuery("FROM Membership", Membership.class).getResultList();
     }
   }
 
@@ -46,17 +45,13 @@ public class PurchaseDao extends BaseDao {
 
   public List<AdditionalProduct> findAllAdditionalProducts() {
     try (EntityManager em = openEm()) {
-      return em.createQuery(
-              "FROM AdditionalProduct a WHERE a.memberId IS NULL", AdditionalProduct.class)
-          .getResultList();
+      return em.createQuery("FROM AdditionalProduct", AdditionalProduct.class).getResultList();
     }
   }
 
   public List<PT> findAllPTs() {
     try (EntityManager em = openEm()) {
-      return em.createQuery(
-              "FROM PT p WHERE p.memberId IS NULL", PT.class)
-          .getResultList();
+      return em.createQuery("FROM PT", PT.class).getResultList();
     }
   }
 
@@ -86,26 +81,14 @@ public class PurchaseDao extends BaseDao {
     }
   }
 
-  public boolean saveMemberMembership(Membership membership) {
+  public boolean saveMemberProduct(MemberProduct mp) {
     try (EntityManager em = openEm()) {
       em.getTransaction().begin();
-      em.persist(membership);
+      em.persist(mp);
       em.getTransaction().commit();
       return true;
     } catch (Exception e) {
-      System.out.println("[JPA 오류] PurchaseDao.saveMemberMembership: " + e.getMessage());
-      return false;
-    }
-  }
-
-  public boolean saveMemberPT(PT pt) {
-    try (EntityManager em = openEm()) {
-      em.getTransaction().begin();
-      em.persist(pt);
-      em.getTransaction().commit();
-      return true;
-    } catch (Exception e) {
-      System.out.println("[JPA 오류] PurchaseDao.saveMemberPT: " + e.getMessage());
+      System.out.println("[JPA 오류] PurchaseDao.saveMemberProduct: " + e.getMessage());
       return false;
     }
   }
@@ -194,11 +177,12 @@ public class PurchaseDao extends BaseDao {
 
   // ===================== 비즈니스 조회 =====================
 
-  public Membership findActiveMembershipByMemberId(String memberId) {
+  public MemberProduct findActiveMembershipByMemberId(String memberId) {
     try (EntityManager em = openEm()) {
       return em.createQuery(
-              "FROM Membership m WHERE m.memberId = :mid AND m.status = 'ACTIVE'",
-              Membership.class)
+              "FROM MemberProduct mp WHERE mp.memberId = :mid"
+                  + " AND mp.productType = 'MEMBERSHIP' AND mp.status = 'ACTIVE'",
+              MemberProduct.class)
           .setParameter("mid", memberId)
           .setMaxResults(1)
           .getResultStream().findFirst().orElse(null);

@@ -5,7 +5,7 @@ import com.fitcoach.client.model.member.ExerciseRecord;
 import com.fitcoach.client.model.point.Point;
 import com.fitcoach.client.model.point.PointHistory;
 import com.fitcoach.client.model.point.PointPolicy;
-import com.fitcoach.client.model.product.Membership;
+import com.fitcoach.client.model.product.MemberProduct;
 import db.BaseDao;
 import db.DBA;
 import jakarta.persistence.EntityManager;
@@ -145,11 +145,12 @@ public class ActivityDao extends BaseDao {
 
   // ===================== 회원권 =====================
 
-  public List<Membership> findActiveMembershipsByMemberId(String memberId) {
+  public List<MemberProduct> findActiveMembershipsByMemberId(String memberId) {
     try (EntityManager em = openEm()) {
       return em.createQuery(
-              "FROM Membership m WHERE m.memberId = :mid AND m.status = 'ACTIVE'",
-              Membership.class)
+              "FROM MemberProduct mp WHERE mp.memberId = :mid"
+                  + " AND mp.productType = 'MEMBERSHIP' AND mp.status = 'ACTIVE'",
+              MemberProduct.class)
           .setParameter("mid", memberId)
           .getResultList();
     }
