@@ -11,6 +11,7 @@
     <class>com.fitcoach.client.model.member.Member</class>
     <class>com.fitcoach.client.model.member.Attendance</class>
     <class>com.fitcoach.client.model.member.ExerciseRecord</class>
+    <class>com.fitcoach.client.model.product.MemberProduct</class>
     <class>com.fitcoach.client.model.product.Membership</class>
     <class>com.fitcoach.client.model.product.PT</class>
     <class>com.fitcoach.client.model.product.ExerciseProgram</class>

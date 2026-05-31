@@ -15,8 +15,8 @@ public class PTSchedule {
   @Column(name = "schedule_id")
   private String scheduleId;
 
-  @Column(name = "pt_id")
-  private String ptId;
+  @Column(name = "member_product_id")
+  private String ptId;  // member_product.member_product_id 참조
 
   @Column(name = "member_id")
   private String memberId;
