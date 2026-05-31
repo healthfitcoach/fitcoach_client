@@ -4,8 +4,7 @@ import com.fitcoach.client.model.member.Member;
 import com.fitcoach.client.model.order.Order;
 import com.fitcoach.client.model.point.Point;
 import com.fitcoach.client.model.point.PointHistory;
-import com.fitcoach.client.model.product.AdditionalProduct;
-import com.fitcoach.client.model.product.Membership;
+import com.fitcoach.client.model.product.MemberProduct;
 import db.BaseDao;
 import db.DBA;
 import jakarta.persistence.EntityManager;
@@ -62,10 +61,11 @@ public class MemberDao extends BaseDao {
 
   // ===================== 회원권 =====================
 
-  public List<Membership> findMembershipsByMemberId(String memberId) {
+  public List<MemberProduct> findMembershipsByMemberId(String memberId) {
     try (EntityManager em = openEm()) {
       return em.createQuery(
-              "FROM Membership m WHERE m.memberId = :mid", Membership.class)
+              "FROM MemberProduct mp WHERE mp.memberId = :mid AND mp.productType = 'MEMBERSHIP'",
+              MemberProduct.class)
           .setParameter("mid", memberId)
           .getResultList();
     }
@@ -85,10 +85,11 @@ public class MemberDao extends BaseDao {
 
   // ===================== 부가상품 =====================
 
-  public List<AdditionalProduct> findPurchasedProductsByMemberId(String memberId) {
+  public List<MemberProduct> findPurchasedProductsByMemberId(String memberId) {
     try (EntityManager em = openEm()) {
       return em.createQuery(
-              "FROM AdditionalProduct a WHERE a.memberId = :mid", AdditionalProduct.class)
+              "FROM MemberProduct mp WHERE mp.memberId = :mid AND mp.productType = 'ADDITIONAL'",
+              MemberProduct.class)
           .setParameter("mid", memberId)
           .getResultList();
     }

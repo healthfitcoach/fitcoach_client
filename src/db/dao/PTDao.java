@@ -1,6 +1,6 @@
 package db.dao;
 
-import com.fitcoach.client.model.product.PT;
+import com.fitcoach.client.model.product.MemberProduct;
 import com.fitcoach.client.model.schedule.PTSchedule;
 import com.fitcoach.client.model.schedule.Trainer;
 import db.BaseDao;
@@ -40,28 +40,31 @@ public class PTDao extends BaseDao {
 
   // ===================== PT =====================
 
-  public List<PT> findActivePTsByMemberId(String memberId) {
+  public List<MemberProduct> findActivePTsByMemberId(String memberId) {
     try (EntityManager em = openEm()) {
       return em.createQuery(
-              "FROM PT p WHERE p.memberId = :mid AND p.status = 'ACTIVE'", PT.class)
+              "FROM MemberProduct mp WHERE mp.memberId = :mid"
+                  + " AND mp.productType = 'PT' AND mp.status = 'ACTIVE'",
+              MemberProduct.class)
           .setParameter("mid", memberId)
           .getResultList();
     }
   }
 
-  public boolean updatePT(PT pt) {
+  public boolean updateMemberProduct(MemberProduct mp) {
     try (EntityManager em = openEm()) {
       em.getTransaction().begin();
       em.createQuery(
-              "UPDATE PT p SET p.remainingCount = :count, p.status = :status WHERE p.ptId = :id")
-          .setParameter("count", pt.getRemainingCount())
-          .setParameter("status", pt.getStatus())
-          .setParameter("id", pt.getPtId())
+              "UPDATE MemberProduct mp SET mp.remainingCount = :count, mp.status = :status"
+                  + " WHERE mp.memberProductId = :id")
+          .setParameter("count", mp.getRemainingCount())
+          .setParameter("status", mp.getStatus())
+          .setParameter("id", mp.getMemberProductId())
           .executeUpdate();
       em.getTransaction().commit();
       return true;
     } catch (Exception e) {
-      System.out.println("[JPA 오류] PTDao.updatePT: " + e.getMessage());
+      System.out.println("[JPA 오류] PTDao.updateMemberProduct: " + e.getMessage());
       return false;
     }
   }
