@@ -2,67 +2,66 @@ package com.fitcoach.client.model.schedule;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 @Entity
 @Table(name = "pt_schedule")
 public class PTSchedule {
 
   @Id
-  @Column(name = "schedule_id")
-  private String scheduleId;
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "id")
+  private Long id;
 
-  @Column(name = "member_product_id")
-  private String ptId;  // member_product.member_product_id 참조
-
-  @Column(name = "member_id")
-  private String memberId;
+  @Column(name = "pt_id")
+  private Long ptId;
 
   @Column(name = "trainer_id")
-  private String trainerId;
+  private Long trainerId;
 
-  @Column(name = "date")
-  private LocalDate date;
+  @Column(name = "member_id")
+  private Long memberId;
 
-  @Column(name = "time")
-  private LocalTime time;
+  @Column(name = "schedule_date")
+  private LocalDate scheduleDate;
 
+  @Column(name = "schedule_time")
+  private String scheduleTime;
+
+  @Enumerated(EnumType.STRING)
   @Column(name = "status")
-  private String status;
+  private ScheduleStatus status;
 
-  public PTSchedule() {}  // JPA 필수 no-arg 생성자
+  public enum ScheduleStatus {
+    SCHEDULED, COMPLETED, CANCELLED
+  }
 
-  public PTSchedule(String scheduleId, String ptId, String memberId, String trainerId,
-      LocalDate date, LocalTime time, String status) {
-    this.scheduleId = scheduleId;
+  public PTSchedule() {}
+
+  public PTSchedule(Long ptId, Long trainerId, Long memberId,
+      LocalDate scheduleDate, String scheduleTime, ScheduleStatus status) {
     this.ptId = ptId;
-    this.memberId = memberId;
     this.trainerId = trainerId;
-    this.date = date;
-    this.time = time;
+    this.memberId = memberId;
+    this.scheduleDate = scheduleDate;
+    this.scheduleTime = scheduleTime;
     this.status = status;
   }
 
-  public boolean init() { return true; }
-
-  public void reserve() {}
-
-  public void search() {}
-
-  public void cancel() {}
-
-  // Getters & Setters
-  public String getScheduleId() { return scheduleId; }
-  public String getPtId() { return ptId; }
-  public String getMemberId() { return memberId; }
-  public String getTrainerId() { return trainerId; }
-  public LocalDate getDate() { return date; }
-  public void setDate(LocalDate date) { this.date = date; }
-  public LocalTime getTime() { return time; }
-  public void setTime(LocalTime time) { this.time = time; }
-  public String getStatus() { return status; }
-  public void setStatus(String status) { this.status = status; }
+  public Long getId() { return id; }
+  public Long getPtId() { return ptId; }
+  public Long getTrainerId() { return trainerId; }
+  public Long getMemberId() { return memberId; }
+  public LocalDate getScheduleDate() { return scheduleDate; }
+  public void setScheduleDate(LocalDate scheduleDate) { this.scheduleDate = scheduleDate; }
+  public String getScheduleTime() { return scheduleTime; }
+  public void setScheduleTime(String scheduleTime) { this.scheduleTime = scheduleTime; }
+  public ScheduleStatus getStatus() { return status; }
+  public void setStatus(ScheduleStatus status) { this.status = status; }
 }

@@ -1,14 +1,16 @@
 package com.fitcoach.client.model.product;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "sport_equipment")
+@PrimaryKeyJoinColumn(name = "product_id")
+@DiscriminatorValue("SPORT_EQUIPMENT")
 public class SportEquipment extends Product {
-
-  // product_id (부모 @Id) 가 이 테이블의 PK — 별도 ID 필드 없음
 
   @Column(name = "stock")
   private int stock;
@@ -16,28 +18,19 @@ public class SportEquipment extends Product {
   @Column(name = "category")
   private String category;
 
-  public SportEquipment() {}  // JPA 필수 no-arg 생성자
+  public SportEquipment() {}
 
-  public SportEquipment(String productId, String productName, int price, String description,
-      int stock, String category) {
-    super(productId, productName, price, description, "SPORT_EQUIPMENT");
+  public SportEquipment(String name, int price, String description,
+      ProductStatus status, int stock, String category) {
+    super(name, price, description, status);
     this.stock = stock;
     this.category = category;
   }
 
-  @Override
-  public boolean init() { return true; }
+  @Override public void purchase() {}
+  @Override public void getDetail() {}
+  @Override public void search() {}
 
-  @Override
-  public void search() {}
-
-  @Override
-  public void purchase() {}
-
-  @Override
-  public void getDetail() {}
-
-  // Getters & Setters
   public int getStock() { return stock; }
   public void setStock(int stock) { this.stock = stock; }
   public String getCategory() { return category; }

@@ -9,57 +9,42 @@ import jakarta.persistence.Table;
 @Table(name = "trainer")
 public class Trainer {
 
+  // trainer_id는 ERP의 employee 테이블과 JOINED 상속 관계 — AUTO_INCREMENT 아님
   @Id
   @Column(name = "trainer_id")
-  private String trainerId;
-
-  @Column(name = "name")
-  private String name;
-
-  @Column(name = "career")
-  private String career;
-
-  @Column(name = "certification")
-  private String certification;
+  private Long trainerId;
 
   @Column(name = "specialty")
   private String specialty;
 
+  @Column(name = "certification")
+  private String certification;
+
   @Column(name = "rating")
   private double rating;
 
-  @Column(name = "profile_picture")
-  private String profilePicture;
+  @Column(name = "experience_years")
+  private int experienceYears;
 
-  public Trainer() {}  // JPA 필수 no-arg 생성자
+  @Column(name = "profile_image")
+  private String profileImage;
 
-  public Trainer(String trainerId, String name, String career, String certification,
-      String specialty, double rating, String profilePicture) {
+  public Trainer() {}
+
+  public Trainer(Long trainerId, String specialty, String certification,
+      double rating, int experienceYears, String profileImage) {
     this.trainerId = trainerId;
-    this.name = name;
-    this.career = career;
-    this.certification = certification;
     this.specialty = specialty;
+    this.certification = certification;
     this.rating = rating;
-    this.profilePicture = profilePicture;
+    this.experienceYears = experienceYears;
+    this.profileImage = profileImage;
   }
 
-  public boolean init() { return true; }
-
-  public void search() {}
-
-  public void listAll() {}
-
-  public void checkSchedule() {}
-
-  public void searchDetail() {}
-
-  // Getters & Setters
-  public String getTrainerId() { return trainerId; }
-  public String getName() { return name; }
-  public String getCareer() { return career; }
-  public String getCertification() { return certification; }
+  public Long getTrainerId() { return trainerId; }
   public String getSpecialty() { return specialty; }
+  public String getCertification() { return certification; }
   public double getRating() { return rating; }
-  public String getProfilePicture() { return profilePicture; }
+  public int getExperienceYears() { return experienceYears; }
+  public String getProfileImage() { return profileImage; }
 }
