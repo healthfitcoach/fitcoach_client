@@ -1,9 +1,6 @@
 package com.fitcoach.client.domain.info;
 
 import com.fitcoach.client.domain.info.repository.ApparatusRepository;
-<parameter name="content">package com.fitcoach.client.domain.info;
-
-import com.fitcoach.client.domain.info.repository.ApparatusRepository;
 import com.fitcoach.client.domain.info.repository.ExerciseMethodRepository;
 import com.fitcoach.client.domain.info.repository.NoticeRepository;
 import com.fitcoach.client.global.exception.CustomException;

@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PointHistoryRepository extends JpaRepository<PointHistory, String> {
 
-  List<PointHistory> findByMemberIdOrderByEarnedDateDesc(String memberId);
+  List<PointHistory> findByMemberIdOrderByDateDesc(String memberId);
 }

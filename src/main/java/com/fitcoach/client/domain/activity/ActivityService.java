@@ -131,7 +131,7 @@ public class ActivityService {
 
   @Transactional(readOnly = true)
   public List<PointHistory> getPointHistories(Long memberId) {
-    return pointHistoryRepository.findByMemberIdOrderByEarnedDateDesc(memberId.toString());
+    return pointHistoryRepository.findByMemberIdOrderByDateDesc(memberId.toString());
   }
 
   @Transactional

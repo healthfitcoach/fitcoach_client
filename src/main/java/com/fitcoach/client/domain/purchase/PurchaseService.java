@@ -8,7 +8,7 @@ import com.fitcoach.client.domain.purchase.repository.MembershipProductRepositor
 import com.fitcoach.client.domain.purchase.repository.MembershipRepository;
 import com.fitcoach.client.domain.purchase.repository.OrderRepository;
 import com.fitcoach.client.domain.purchase.repository.PTProductRepository;
-import com.fitcoach.client.domain.purchase.repository.PTScheduleRepository;
+import com.fitcoach.client.domain.pt.repository.PTScheduleRepository;
 import com.fitcoach.client.domain.purchase.repository.PTSubscriptionRepository;
 import com.fitcoach.client.domain.purchase.repository.PaymentRepository;
 import com.fitcoach.client.domain.purchase.repository.SportEquipmentRepository;
